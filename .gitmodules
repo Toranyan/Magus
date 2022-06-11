@@ -1,0 +1,3 @@
+[submodule "Assets/ToraLib"]
+	path = Assets/ToraLib
+	url = https://github.com/Toranyan/ToraLib
