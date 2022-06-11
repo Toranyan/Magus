@@ -91,6 +91,13 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TeleType.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexZoom.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01.cs" />
+    <Compile Include="Assets\ToraLib\Scripts\AssetBundle\CAssetBundleConfigs.cs" />
+    <Compile Include="Assets\ToraLib\Scripts\Test\CAssetLoadTest.cs" />
+    <Compile Include="Assets\ToraLib\Scripts\Camera\CFollowCamController.cs" />
+    <Compile Include="Assets\ToraLib\Scripts\AssetBundle\CAssetBundleManager.cs" />
+    <Compile Include="Assets\ToraLib\Scripts\Singleton\CSingleton.cs" />
+    <Compile Include="Assets\ToraLib\Scripts\Camera\CCloneCamera.cs" />
+    <Compile Include="Assets\ToraLib\Scripts\Camera\CFollowCamera.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
