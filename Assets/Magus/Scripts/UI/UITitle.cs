@@ -1,18 +1,55 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class UITitle : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+using tora.ui;
+using magus.singleton;
+using magus.system;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+
+
+namespace magus.ui {
+
+	public class UITitle : MonoBehaviour {
+
+		#region Serialized Fields
+		[SerializeField]
+		private Button _playButton;
+
+		[SerializeField]
+		private Button _optionsButton;
+
+		[SerializeField]
+		private UIAnimatedView _optionsWindow;
+
+		#endregion
+
+		#region Member Functions
+
+		private void Awake() {
+
+			//init events
+			_playButton.onClick.AddListener(OnClickPlayButton);
+			_optionsButton.onClick.AddListener(OnClickOptionsButton);
+
+		}
+
+
+		private void OnClickPlayButton() {
+
+			//tell controller to transition
+			SceneController.Instance.ChangeScene(Scene.Battle);
+		}
+
+		private void OnClickOptionsButton() {
+			_optionsWindow.Open();
+		}
+
+		#endregion
+
+	}
+
+
+
 }
