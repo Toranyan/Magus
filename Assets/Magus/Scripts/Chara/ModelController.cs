@@ -60,7 +60,10 @@ namespace App.Chara
 
 		public void UpdateRotation(float deltaTime)
 		{
-			_characterController.transform.rotation = Quaternion.LookRotation(_moveVector, Vector3.up);
+			if (_moveVector.magnitude > 0)
+			{
+				_characterController.transform.rotation = Quaternion.LookRotation(_moveVector, Vector3.up);
+			}
 		}
 
 	}
