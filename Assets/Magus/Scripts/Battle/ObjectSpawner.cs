@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace App.Battle
+namespace magus.battle
 {
     /// <summary>
     /// Spawns objects in an area
@@ -24,19 +24,28 @@ namespace App.Battle
         [SerializeField]
         private int _maxObjects;
 
-        private ObjectPooler<MonoBehaviour> _pooler;
+        private ObjectPooler<MonoBehaviour> _pooler = new();
 
         private double _lastSpawnTime;
 
+        private bool _initialized;
+
 		public void Initialize()
 		{
+            if (_initialized)
+			{
+                return;
+			}
             _pooler.Initialize(_objectPrefab, this.transform);
+
+            _initialized = true;
 		}
 
 		private void Update()
 		{
+            Initialize();
 
-            if (Time.time - _lastSpawnTime > 1 / _spawnRate
+            if (Time.time - _lastSpawnTime > 1.0 / _spawnRate
                 && _pooler.AllocatedCount < _maxObjects)
 			{
                 SpawnObject();
@@ -45,8 +54,11 @@ namespace App.Battle
 
         private void SpawnObject()
 		{
+            Debug.Log("Spawn at: " + Time.time);
             var obj = _pooler.Allocate();
             obj.transform.SetParent(_targetParent);
+            obj.transform.localPosition = transform.localPosition;
+            obj.gameObject.SetActive(true);
             _lastSpawnTime = Time.time;
 		}
 

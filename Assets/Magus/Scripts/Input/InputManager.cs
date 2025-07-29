@@ -5,7 +5,7 @@ using tora.singleton;
 using UnityEngine.InputSystem;
 using System;
 
-namespace App.Input
+namespace magus.input
 {
     public class InputManager : SingletonComponent<InputManager>
     {

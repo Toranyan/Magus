@@ -1,8 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace App.Battle
+namespace magus.battle
 {
 
     public class ObjectPooler<T> where T : MonoBehaviour
@@ -11,18 +12,22 @@ namespace App.Battle
         private Queue<T> _pool;
         private List<T> _allocatedObjects;
 
-        private float _expansionBatchSize;
+        private float _expansionBatchSize = 10;
         private T _objPrefab;
         private Transform _poolContainer;
+
+        private Action<T> _onCreatedCallback;
 
         public int AllocatedCount
         {
             get { return _allocatedObjects.Count; }
         }
 
-        public void Initialize(T prefab, Transform poolContainer)
+        public void Initialize(T prefab, Transform poolContainer, Action<T> onCreatedCallback = null)
         {
+            _poolContainer = poolContainer;
             _objPrefab = prefab;
+            _onCreatedCallback = onCreatedCallback;
             InitializePool();
         }
 
@@ -54,6 +59,7 @@ namespace App.Battle
             obj.gameObject.SetActive(false);
             _pool.Enqueue(obj);
             _allocatedObjects.Remove(obj);
+            obj.transform.SetParent(_poolContainer);
         }
 
         private void ExpandPool()
@@ -62,7 +68,9 @@ namespace App.Battle
             {
                 var obj = GameObject.Instantiate<T>(_objPrefab);
                 _pool.Enqueue(obj);
+                obj.gameObject.SetActive(false);
                 obj.transform.SetParent(_poolContainer);
+                _onCreatedCallback?.Invoke(obj);
             }
         }
 

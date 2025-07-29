@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 1; justify-content: space-between;">
+        <ui:Label text="Label">
+            <Bindings>
+                <UnityEngine.Localization.LocalizedString property="text" table="GUID:34f17d57974e7cb4ba13c039a1ef8406" entry="Id(75267276800)" />
+            </Bindings>
+        </ui:Label>
+        <ui:VisualElement style="flex-grow: 1; height: auto; bottom: auto; right: auto; left: auto; align-items: auto; justify-content: center; align-self: auto; flex-direction: row; min-height: 150px; max-height: 200px; transform-origin: center;">
+            <ui:Button text="Button" style="justify-content: flex-end; align-items: center; align-content: center; align-self: center; height: 36px;" />
+            <ui:Button text="Button" style="justify-content: flex-end; align-items: center; align-content: center; align-self: center; height: 36px;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
