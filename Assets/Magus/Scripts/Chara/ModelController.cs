@@ -1,3 +1,5 @@
+using Cysharp.Threading.Tasks;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -35,6 +37,8 @@ namespace magus.chara
 
 		private Vector3 _moveVector;
 
+		public event Action DeathAnimationFinished;
+
 		public bool IsGrounded { get; private set; }
 
 		private float _verticalVelocity;
@@ -54,6 +58,13 @@ namespace magus.chara
 		{
 			_moveVector = Vector3.zero;
 			_animator.SetFloat("Speed", 2);
+			_animator.SetBool("Alive", true);
+		}
+
+		public void Setup()
+		{
+			_animator.enabled = true;
+			_characterController.enabled = true;
 		}
 
 		public void Update()
@@ -120,6 +131,49 @@ namespace magus.chara
 			IsGrounded = Physics.CheckSphere(spherePosition, _groundedRadius, _groundLayers,
 				QueryTriggerInteraction.Ignore);
 
+		}
+
+		public void StartDeathAnimation()
+		{
+
+			//DeathAnimation().Forget();
+			Ragdoll().Forget();
+		}
+
+		public async UniTask Ragdoll()
+		{
+			_animator.enabled = false;
+			_characterController.enabled = false;
+			await UniTask.Delay(TimeSpan.FromSeconds(3));
+			OnDeathAnimationFinished();
+		}
+
+		private async UniTask DeathAnimation()
+		{
+			//
+			_animator.SetBool("Alive", false);
+			AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
+
+			var animationStartTime = Time.time;
+			var maxDeathAnimTime = 3;
+			
+			do
+			{
+				// Check if we're in the "Death" state and if it's finished
+				if (stateInfo.IsName("Death") && stateInfo.normalizedTime >= 1f)
+				{
+					Debug.Log("Death animation finished!");
+					break;
+				}
+				await UniTask.WaitForEndOfFrame(this);
+			} while (Time.time - animationStartTime < maxDeathAnimTime);
+
+			OnDeathAnimationFinished();
+		}
+
+		private void OnDeathAnimationFinished()
+		{
+			DeathAnimationFinished?.Invoke();
 		}
 
 	}

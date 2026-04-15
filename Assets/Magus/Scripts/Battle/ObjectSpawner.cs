@@ -16,19 +16,24 @@ namespace magus.battle
         private float _spawnRate;
 
         [SerializeField]
-        private MonoBehaviour _objectPrefab;
+        private PoolableHandler _objectPrefab;
 
         [SerializeField]
         private Transform _targetParent;
 
         [SerializeField]
-        private int _maxObjects;
+        private int _maxObjects = 10;
 
-        private ObjectPooler<MonoBehaviour> _pooler = new();
+        [SerializeField]
+        private int _maxSpawns = 20;
+
+        private ObjectPooler<PoolableHandler> _pooler = new();
 
         private double _lastSpawnTime;
 
         private bool _initialized;
+
+        private int _spawnCount = 0;
 
 		public void Initialize()
 		{
@@ -46,7 +51,9 @@ namespace magus.battle
             Initialize();
 
             if (Time.time - _lastSpawnTime > 1.0 / _spawnRate
-                && _pooler.AllocatedCount < _maxObjects)
+                && _pooler.AllocatedCount < _maxObjects
+                && _spawnCount < _maxSpawns
+                )
 			{
                 SpawnObject();
 			}
@@ -54,12 +61,20 @@ namespace magus.battle
 
         private void SpawnObject()
 		{
-            Debug.Log("Spawn at: " + Time.time);
             var obj = _pooler.Allocate();
             obj.transform.SetParent(_targetParent);
             obj.transform.localPosition = transform.localPosition;
             obj.gameObject.SetActive(true);
             _lastSpawnTime = Time.time;
+            _spawnCount++;
+
+            var handler = obj.GetComponent<PoolableHandler>();
+            if (handler)
+			{
+                handler.Pool = _pooler;
+			}
+
+
 		}
 
 	}

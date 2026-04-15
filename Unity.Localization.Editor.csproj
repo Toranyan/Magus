@@ -55,7 +55,7 @@
     <UnityVersion>6000.1.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="G:\Program Files\Visual Studio\Common7\IDE\Extensions\Microsoft\Visual Studio Tools for Unity\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -129,8 +129,8 @@
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\UI\Settings\LocalizationPreferencesProvider.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Plugins\Google\Columns\LocaleMetadataColumn.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Plugins\Device Simulator\LocalizationDeviceSimulatorPlugin.cs" />
-    <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Plugins\Google\Columns\SheetColumn.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\UI\Utility\PropertyDrawerExtended.cs" />
+    <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Plugins\Google\Columns\SheetColumn.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\UI\Smart Format\SmartFormatField.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Platform\Android\BuildPlayerAndroid.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Attributes\LocalizationTablesWindowAttributes.cs" />
@@ -163,8 +163,8 @@
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Search\AssetTableSearchProvider.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\UI\Components\LocalizeStringEventEditor.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\UI\Utility\PathHelper.cs" />
-    <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\UI\Tables\GenericAssetTableListViewColumns.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Search\ColumnSelectors.cs" />
+    <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\UI\Tables\GenericAssetTableListViewColumns.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Plugins\Xliff\V2\xliff 2.0.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\Platform\iOS\Player.cs" />
     <Compile Include="Library\PackageCache\com.unity.localization@5f17a628c6e9\Editor\UI\Utility\AssetUtility.cs" />

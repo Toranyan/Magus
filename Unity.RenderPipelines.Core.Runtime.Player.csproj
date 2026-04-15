@@ -55,7 +55,7 @@
     <UnityVersion>6000.1.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="G:\Program Files\Visual Studio\Common7\IDE\Extensions\Microsoft\Visual Studio Tools for Unity\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -125,8 +125,8 @@
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Debugging\DebugUI.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\CommandBuffers\CommandBufferHelpers.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\PostProcessing\LensFlareDataSRP.cs" />
-    <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Lighting\ProbeVolume\ProbeReferenceVolume.Debug.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\XR\XRLayout.cs" />
+    <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Lighting\ProbeVolume\ProbeReferenceVolume.Debug.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\XR\XRSystem.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Debugging\DebugDisplaySettingsHDROutput.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Common\ContextContainer.cs" />
@@ -263,8 +263,8 @@
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\RenderGraph\Debug\RenderGraphDebugParams.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Debugging\Prefabs\Scripts\DebugUIHandlerObject.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Debugging\IDebugDisplaySettings.cs" />
-    <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Common\CommonStructs.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Utilities\DelegateUtility.cs" />
+    <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Common\CommonStructs.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\RenderGraph\RenderGraphResourcePool.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Lighting\ProbeVolume\ProbeVolumeBakingSet.cs" />
     <Compile Include="Library\PackageCache\com.unity.render-pipelines.core@cedf7ca623df\Runtime\Utilities\GPUSort\GPUSort.Data.cs" />
@@ -673,6 +673,10 @@
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
       <HintPath>Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Library\PackageCache\com.unity.nuget.newtonsoft-json@74deb55db2a0\Runtime\AOT\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="netstandard">

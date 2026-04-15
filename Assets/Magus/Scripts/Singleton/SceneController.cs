@@ -12,7 +12,19 @@ namespace magus.singleton {
 
 		public void ChangeScene(Scene scene) {
 
+			switch(scene)
+			{
+				case Scene.Battle:
+					ChangeSceneInternal("BattleScene");
+					break;
+			}
 		}
+
+		private void ChangeSceneInternal(string sceneName)
+		{
+			UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+		}
+
 
 	}
 

@@ -55,7 +55,7 @@
     <UnityVersion>6000.1.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="G:\Program Files\Visual Studio\Common7\IDE\Extensions\Microsoft\Visual Studio Tools for Unity\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -158,8 +158,8 @@
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Graphs\IGraphElementWithData.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Unity\Singleton.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Dependencies\FullSerializer\Converters\fsDictionaryConverter.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Graphs\GraphReference.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Reflection\Operators\AdditionHandler.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Graphs\GraphReference.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Graphs\GraphElement.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Dependencies\FullSerializer\fsAotCompilationManager.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Connections\IConnectionCollection.cs" />
@@ -205,8 +205,8 @@
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Unity\MacroScriptableObject.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Reflection\Operators\LessThanOrEqualHandler.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Listeners\MonoBehaviour\UnityOnCollisionStayMessageListener.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Cloning\Cloners\ArrayCloner.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Reflection\Operators\MultiplicationHandler.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Cloning\Cloners\ArrayCloner.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Reflection\Operators\ExclusiveOrHandler.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Input\MouseButton.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Reflection\Optimization\Func_5.cs" />
@@ -283,8 +283,8 @@
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Dependencies\FullSerializer\Converters\fsKeyValuePairConverter.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Reflection\GenericClosingException.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Ensure\EnsureThat.Booleans.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Ensure\EnsureThat.Guids.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Variables\VariablesSaver.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Ensure\EnsureThat.Guids.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Exceptions\DebugUtility.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Listeners\UIInterfaces\UnityOnCancelMessageListener.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Reflection\Operators\DivisionHandler.cs" />
@@ -346,9 +346,9 @@
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Dependencies\FullSerializer\Converters\fsDateConverter.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Properties\AssemblyInfo.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Serialization\SerializeAttribute.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Listeners\UI\UnityOnDropdownValueChangedMessageListener.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Reflection\Operators\LeftShiftHandler.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\EditorBinding\Inspector\InspectorLabelAttribute.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Listeners\UI\UnityOnDropdownValueChangedMessageListener.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Reflection\Optimization\Action_6.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Listeners\MessageListener.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Dependencies\FullSerializer\fsMemberSerialization.cs" />
@@ -430,8 +430,8 @@
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Cloning\ICloner.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Utilities\StringUtility.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Variables\InspectorVariableNameAttribute.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\SerializedProperties\SerializedPropertyProviderAttribute.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Listeners\MonoBehaviour\UnityOnMouseDragMessageListener.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\SerializedProperties\SerializedPropertyProviderAttribute.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Utilities\UnityObjectUtility.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\Dependencies\FullSerializer\fsConverterRegistrar.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Core\EditorBinding\Inspector\InspectorDelayedAttribute.cs" />
@@ -1017,6 +1017,10 @@
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
       <HintPath>Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Library\PackageCache\com.unity.nuget.newtonsoft-json@74deb55db2a0\Runtime\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">

@@ -55,7 +55,7 @@
     <UnityVersion>6000.1.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="G:\Program Files\Visual Studio\Common7\IDE\Extensions\Microsoft\Visual Studio Tools for Unity\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -120,8 +120,8 @@
     <Compile Include="Library\PackageCache\com.unity.test-framework@7056e7f856e9\UnityEditor.TestRunner\Api\ITestRunnerApi.cs" />
     <Compile Include="Library\PackageCache\com.unity.test-framework@7056e7f856e9\UnityEditor.TestRunner\TestLaunchers\Helpers\PrebuildSetupAttributeFinder.cs" />
     <Compile Include="Library\PackageCache\com.unity.test-framework@7056e7f856e9\UnityEditor.TestRunner\TestLaunchers\RemotePlayerLogController.cs" />
-    <Compile Include="Library\PackageCache\com.unity.test-framework@7056e7f856e9\UnityEditor.TestRunner\TestLaunchers\PlatformSetup\IPlatformSetup.cs" />
     <Compile Include="Library\PackageCache\com.unity.test-framework@7056e7f856e9\UnityEditor.TestRunner\TestRunner\EditModePCHelper.cs" />
+    <Compile Include="Library\PackageCache\com.unity.test-framework@7056e7f856e9\UnityEditor.TestRunner\TestLaunchers\PlatformSetup\IPlatformSetup.cs" />
     <Compile Include="Library\PackageCache\com.unity.test-framework@7056e7f856e9\UnityEditor.TestRunner\UnityTestProtocol\TestState.cs" />
     <Compile Include="Library\PackageCache\com.unity.test-framework@7056e7f856e9\UnityEditor.TestRunner\UnityTestProtocol\Messages\EditorVersionMessage.cs" />
     <Compile Include="Library\PackageCache\com.unity.test-framework@7056e7f856e9\UnityEditor.TestRunner\CommandLineTest\SettingsBuilder.cs" />

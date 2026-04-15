@@ -7,84 +7,41 @@ namespace magus.battle
 {
     public class ProjectileManager : MonoBehaviour
     {
-		private Dictionary<string, ObjectPooler<ProjectileBase>> _poolDict = new();
 
-		public void Init()
-		{
-
-		}
+		[SerializeField]
+		private ObjectPoolManager _poolManager;
 
 		public async UniTask Init(string[] ids)
 		{
-			await UniTask.WhenAll(
-				ids.Select(id => CreatePool(id))
-			);
+			await _poolManager.Init(ids);
 		}
 
 
-		public async UniTask<ProjectileBase> CreateProjectile(string id, IOwner owner)
+		public async UniTask<ProjectileBase> CreateProjectile(string id, IBattleEntity owner)
 		{
-			ProjectileBase proj;
-			if (_poolDict.TryGetValue(id, out var pool))
-			{
-				proj = pool.Allocate();
-				return proj;
-			} else
-			{
-				var newPool = await CreatePool(id);
+			var handle = await _poolManager.Allocate(id);
+			handle.gameObject.SetActive(true);
 
-				proj = newPool.Allocate();
-			}
+			var proj = handle.GetComponent<ProjectileBase>();
+			proj.ClearEvents();
+			proj.Killed += OnProjectileKilled;
+			proj.SetOwner(owner);
+
 			return proj;
 		}
+
 
 		public void DeallocProjectile(ProjectileBase projectile)
 		{
-			var id = GetProjectileId(projectile);
-
-			if (_poolDict.TryGetValue(id, out var pool))
+			var handle = projectile.GetComponent<PoolableHandler>();
+			if (handle != null)
 			{
-				pool.Free(projectile);
-			} else
+				handle.ReturnToPool();
+			} 
+			else 
 			{
-				Debug.LogError("Deallocating a projectile that was not allocated through manager");
+				Debug.LogError("Unable to return to pool");
 			}
-		}
-
-		private async UniTask<ProjectileBase> GetProjectilePrefab(string id)
-		{
-			//TODO Get from master
-			var obj = await Addressables.LoadAssetAsync<GameObject>("GameObjects/Projectiles/Fireball.prefab");
-			var proj = obj.GetComponent<ProjectileBase>();
-			return proj;
-		}
-
-		private string GetProjectileId(ProjectileBase projectile)
-		{
-			return "1";
-		}
-
-		private async UniTask<ObjectPooler<ProjectileBase>> CreatePool(string id)
-		{
-			var prefab = await GetProjectilePrefab(id);
-			var newPool = new ObjectPooler<ProjectileBase>();
-			newPool.Initialize(prefab, this.transform, OnProjectileCreated);
-			_poolDict[id] = newPool;
-			return newPool;
-		}
-
-		private void OnProjectileCreated(ProjectileBase projectile)
-		{
-			//called when the pool is initialized or expanded
-
-			//Setup events
-			projectile.Killed += OnProjectileKilled;
-			projectile.Revived += OnProjectileRevived;
-		}
-
-		private void OnProjectileRevived(ProjectileBase projectile)
-		{
-			//Theoretically the proj was allocated through here already, no need to do anything
 		}
 
 		private void OnProjectileKilled(ProjectileBase projectile)

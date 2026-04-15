@@ -6,29 +6,64 @@ using magus.input;
 using UnityEngine.AddressableAssets;
 using magus.battle;
 using Cysharp.Threading.Tasks;
+using magus.master;
 
 namespace magus.chara
 {
-    public class PlayerController : MonoBehaviour, IOwner
+    public class PlayerController : MonoBehaviour, IBattleEntity
     {
         [SerializeField]
         private GameCharaController _gameCharaController;
 
+        private ProjectileAttackComponent _projectileAttackComponent;
 
         public int TeamId => _gameCharaController.TeamId;
 
+        // implement IBattleEntity.GameObject (IOwner extends IBattleEntity)
+        public GameObject GameObject => this.gameObject;
 
-        private void Start()
+        private GameCharaController _targetEnemy;
+
+        private List<SpellInstance> _equippedSpells = new List<SpellInstance>();
+
+        private List<IAbilityExecutor> _abilityExecutors = new List<IAbilityExecutor>();
+
+
+        private List<AbilityInfo> _abilities = new List<AbilityInfo>();
+
+		private void Start()
         {
-            Initialize();
         }
 
-		private void Initialize()
+		public void Initialize()
 		{
             //input setup
             //InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Move, InputManager.InputPhase.Started, OnMoveInput);
             //InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Move, InputManager.InputPhase.Cancelled, OnMoveInput);
             InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Attack, InputManager.InputPhase.Performed, OnAttackInput);
+
+            InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Ability_01, InputManager.InputPhase.Performed, (c) => OnAbilityInput(0));
+			InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Ability_02, InputManager.InputPhase.Performed, (c) => OnAbilityInput(1));
+
+			//TEMP
+			//_equippedSpells.Add(SpellFactory.CreateSpell())
+
+			//initialize abilities
+			var abilityMaster1 = MasterData.GetMasterData<AbilityMasterData>("ability_fireball_01");
+            var ability1 = new AbilityInfo(abilityMaster1, this);
+            _abilities.Add(ability1);
+
+			var abilityMaster2 = MasterData.GetMasterData<AbilityMasterData>("ability_blackhole_01");
+			var ability2 = new AbilityInfo(abilityMaster2, this);
+			_abilities.Add(ability2);
+			//_abilityExecutors.Add(AbilityExecutorFactory.CreateAbilityExecutor(ability1));
+
+
+
+			_projectileAttackComponent = GetComponent<ProjectileAttackComponent>();
+            _projectileAttackComponent.Setup(this);
+
+            _gameCharaController.Setup();
         }
 
         private void SetupInput()
@@ -40,6 +75,8 @@ namespace magus.chara
 		private void Update()
 		{
             UpdateMoveVector();
+
+            UpdateTarget();
 		}
 
 
@@ -50,6 +87,12 @@ namespace magus.chara
             vector.x = inputVec.x;
             vector.z = inputVec.y;
             _gameCharaController.SetMoveVector(vector);
+        }
+
+        private void UpdateTarget()
+		{
+            _targetEnemy = GetClosestEnemy();
+
         }
 
 
@@ -70,35 +113,61 @@ namespace magus.chara
             Debug.Log("OnAttackInput");
 
             //TODO use projectilemanager
-            CreateProjectile().Forget();
+            //CreateProjectile().Forget();
         }
 
-        private async UniTask CreateProjectile()
+        private void OnAbilityInput(int index)
 		{
-            var proj = await BattleController.Instance.ProjectileManager.CreateProjectile("1", this);
-            var initVec = new Vector3(0, 0, 1);
-            proj.transform.SetParent(null);
+            //CreateProjectile().Forget();
 
-            var initPos = transform.position;
-            initPos.y = 1;
-            proj.transform.position = initPos;
-            
+            //TODO mapping
 
-            var enemy = GetClosestEnemy();
-            if (enemy != null)
-			{
-                var deltaVec = enemy.transform.position - transform.position;
-                initVec = deltaVec.normalized;
-                Debug.Log($"initvec : {initVec}");
-			}
-            else
-			{
-                initVec = this.transform.rotation *  Vector3.forward;
-			}
+            var executionContext = new AbilityExecutionContext {
+                Owner = this,
+                Source = this,
+                Target = _targetEnemy,
+				SourcePosition = this.transform.position,
+                TargetPosition = _targetEnemy != null ? _targetEnemy.transform.position : this.transform.position + this.transform.forward * 10f,
+                Info = _abilities[index]
+            };
 
-            proj.Setup(initVec);
-            proj.Revive();
+            var executor = AbilityExecutorFactory.CreateAbilityExecutor(_abilities[index]);
+            executor.ExecuteAbility(executionContext);
+		}
+
+        private void ProjectileAttack()
+		{
+            _projectileAttackComponent.AttackTarget(_targetEnemy);
         }
+
+
+        //private async UniTask CreateProjectile()
+        //{
+        //	var proj = await BattleController.Instance.ProjectileManager.CreateProjectile("Prefabs/Projectiles/Fireball.prefab", this);
+        //	var initVec = new Vector3(0, 0, 1);
+        //	proj.transform.SetParent(null);
+
+        //	var initPos = transform.position;
+        //	initPos.y += 1;
+        //	proj.transform.position = initPos;
+
+
+        //	var enemy = GetClosestEnemy();
+        //	if (enemy != null)
+        //	{
+        //		var targetVec = enemy.transform.position;
+        //		targetVec.y += 1;
+        //		var deltaVec = targetVec - initPos;
+        //		deltaVec.y = 0;
+        //		initVec = deltaVec.normalized;
+        //		Debug.Log($"initvec : {initVec}");
+        //	} else
+        //	{
+        //		initVec = this.transform.rotation * Vector3.forward;
+        //	}
+
+        //	proj.Setup(initVec);
+        //}
 
         private GameCharaController GetClosestEnemy()
 		{
@@ -112,7 +181,7 @@ namespace magus.chara
             foreach (var hit in hits)
             {
                 var controller = hit.GetComponent<GameCharaController>();
-                if (controller != null && controller != this && controller.TeamId != TeamId)
+                if (controller != null && controller.gameObject != this.gameObject && controller.TeamId != TeamId)
                 {
                     float distSqr = (controller.transform.position - this.transform.position).sqrMagnitude;
                     if (distSqr < closestDistanceSqr)

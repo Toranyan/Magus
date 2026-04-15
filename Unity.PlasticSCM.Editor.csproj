@@ -55,7 +55,7 @@
     <UnityVersion>6000.1.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="G:\Program Files\Visual Studio\Common7\IDE\Extensions\Microsoft\Visual Studio Tools for Unity\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -77,8 +77,8 @@
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\UI\EnumPopupSetting.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Configuration\ClientConfiguration.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\AssetMenu\Dialogs\CheckinDialogOperations.cs" />
-    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\_Deprecated\WebApi\IsCollabProjectMigratedResponse.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Developer\ProgressOperationHandler.cs" />
+    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\_Deprecated\WebApi\IsCollabProjectMigratedResponse.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Merge\Developer\MergeSelection.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Merge\Developer\DirectoryConflicts\MovedEvilTwinMenu.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Developer\GenericProgress.cs" />
@@ -195,8 +195,8 @@
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Merge\Developer\IsCurrent.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\UI\EditorProgressControls.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Configuration\CredentialsDialog.cs" />
-    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Changesets\ChangesetsTab.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\EnableSwitchAndShelveFeatureDialog.cs" />
+    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Changesets\ChangesetsTab.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\UI\DrawSplitter.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\UI\StatusBar\StatusBar.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\PlasticPlugin.cs" />
@@ -218,8 +218,8 @@
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\UI\Tree\ListViewItemIds.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Developer\UpdateReport\UpdateReportListHeaderState.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Tool\IsExeVersion.cs" />
-    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Diff\DiffPanel.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\PlasticShutdown.cs" />
+    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Diff\DiffPanel.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Developer\CheckinProgress.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Changesets\ChangesetListViewItem.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Merge\Gluon\UnityIncomingChangesTree.cs" />
@@ -284,8 +284,8 @@
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\AssetMenu\AssetsSelection.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\UI\OverlayRect.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\AssetOverlays\AssetStatus.cs" />
-    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Merge\DrawMergeOverview.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Settings\ShelveAndSwitchOptionsFoldout.cs" />
+    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Merge\DrawMergeOverview.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\ViewSwitcher.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Merge\Gluon\IncomingChangesTreeView.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\Shelves\ShelvesSelection.cs" />
@@ -406,8 +406,8 @@
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\PlasticConnectionMonitor.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\UI\UIElements\UIElementsExtensions.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\AssetsUtils\Processor\WorkspaceOperationsMonitor.cs" />
-    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Configuration\MissingEncryptionPasswordPromptHandler.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\History\HistoryListHeaderState.cs" />
+    <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Configuration\MissingEncryptionPasswordPromptHandler.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Editor\Views\CreateWorkspace\Dialogs\CreateRepositoryDialog.cs" />
   </ItemGroup>
   <ItemGroup>

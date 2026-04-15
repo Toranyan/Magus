@@ -16,18 +16,17 @@ namespace magus.battle
         private T _objPrefab;
         private Transform _poolContainer;
 
-        private Action<T> _onCreatedCallback;
+        public event Action<ObjectPooler<T>, T> ObjectCreated;
 
         public int AllocatedCount
         {
             get { return _allocatedObjects.Count; }
         }
 
-        public void Initialize(T prefab, Transform poolContainer, Action<T> onCreatedCallback = null)
+        public void Initialize(T prefab, Transform poolContainer)
         {
             _poolContainer = poolContainer;
             _objPrefab = prefab;
-            _onCreatedCallback = onCreatedCallback;
             InitializePool();
         }
 
@@ -70,7 +69,8 @@ namespace magus.battle
                 _pool.Enqueue(obj);
                 obj.gameObject.SetActive(false);
                 obj.transform.SetParent(_poolContainer);
-                _onCreatedCallback?.Invoke(obj);
+
+                ObjectCreated?.Invoke(this, obj);
             }
         }
 

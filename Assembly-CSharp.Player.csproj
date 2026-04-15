@@ -55,7 +55,7 @@
     <UnityVersion>6000.1.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="G:\Program Files\Visual Studio\Common7\IDE\Extensions\Microsoft\Visual Studio Tools for Unity\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="G:\Program Files\Unity\6000.1.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -64,9 +64,11 @@
     <Compile Include="Assets\ToraLib\Scripts\UI\IUIState.cs" />
     <Compile Include="Assets\Magus\Scripts\UI\States\UIBattleStartState.cs" />
     <Compile Include="Assets\Magus\Scripts\UI\UIManager.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Spells\SpellFactory.cs" />
     <Compile Include="Assets\ToraLib\Demo\Shmup\Scripts\Unit\IUnit.cs" />
     <Compile Include="Assets\Magus\Scripts\Input\InputManager.cs" />
     <Compile Include="Assets\ToraLib\Demo\Shmup\Scripts\Unit\Weapon.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\DamageInfo.cs" />
     <Compile Include="Assets\Magus\Scripts\UI\UIBattleView.cs" />
     <Compile Include="Assets\Samples\Input System\1.3.0\Simple Demo\SimpleController_UsingActions.cs" />
     <Compile Include="Assets\ToraLib\Scripts\UI\AnimationGroup.cs" />
@@ -74,24 +76,33 @@
     <Compile Include="Assets\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualTouchZone.cs" />
     <Compile Include="Assets\Magus\Scripts\UI\CastMenu\CastMenuPresenter.cs" />
     <Compile Include="Assets\ToraLib\Scripts\UI\UIStateManager.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Spells\SpellInstance.cs" />
     <Compile Include="Assets\ToraLib\Demo\Shmup\Scripts\Unit\Projectile.cs" />
     <Compile Include="Assets\Samples\Input System\1.3.0\Simple Demo\SimpleControls.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Ability\AbilityEntityComponent.cs" />
     <Compile Include="Assets\ToraLib\Demo\Shmup\Scripts\Unit\PlaneUnitController.cs" />
     <Compile Include="Assets\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualJoystick.cs" />
     <Compile Include="Assets\Magus\Scripts\Chara\SpriteModelController.cs" />
     <Compile Include="Assets\ToraLib\Scripts\Unit\CUnit.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Ability\AbilityExecutionContext.cs" />
     <Compile Include="Assets\ToraLib\Scripts\FSM\StateMachine.cs" />
     <Compile Include="Assets\ToraLib\Scripts\Input\CRaycastController.cs" />
     <Compile Include="Assets\Magus\Scripts\Battle\ProjectileManager.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\IBattleEntity.cs" />
     <Compile Include="Assets\ToraLib\Scripts\FSM\StateController.cs" />
+    <Compile Include="Assets\UnityTechnologies\ParticlePack\EffectExamples\Misc Effects\Scripts\SpawnEffect.cs" />
     <Compile Include="Assets\Magus\Scripts\Battle\ObjectPooler.cs" />
     <Compile Include="Assets\ToraLib\Demo\Shmup\Scripts\Unit\IDestructible.cs" />
-    <Compile Include="Assets\Magus\Scripts\Battle\IOwner.cs" />
+    <Compile Include="Assets\Magus\Scripts\Master\UnitMasterDataUnity.cs" />
     <Compile Include="Assets\Magus\Scripts\Battle\ObjectSpawner.cs" />
     <Compile Include="Assets\Magus\Scripts\Chara\PlayerController.cs" />
+    <Compile Include="Assets\Magus\Scripts\Master\AbilityMasterDataUnity.cs" />
     <Compile Include="Assets\Magus\Scripts\Battle\BattleFSM.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Ability\AbilityEntity.cs" />
     <Compile Include="Assets\Magus\Scripts\UI\UITitle.cs" />
     <Compile Include="Assets\ToraLib\Scripts\AssetBundle\CAssetBundleConfigs.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Ability\ProjectileAbiltyExecutor.cs" />
+    <Compile Include="Assets\UnityTechnologies\ParticlePack\Shared\Scripts\ProximityActivate.cs" />
     <Compile Include="Assets\ToraLib\Demo\Shmup\Scripts\Unit\DamageInstance.cs" />
     <Compile Include="Assets\ToraLib\Scripts\UI\UIViewBase.cs" />
     <Compile Include="Assets\StarterAssets\Mobile\Scripts\Utilities\MobileDisableAutoSwitchControls.cs" />
@@ -99,57 +110,89 @@
     <Compile Include="Assets\ToraLib\Scripts\FSM\StateMachineController.cs" />
     <Compile Include="Assets\Magus\Scripts\Battle\BattleInitState.cs" />
     <Compile Include="Assets\Samples\Input System\1.3.0\Simple Demo\SimpleController_UsingState.cs" />
+    <Compile Include="Assets\Magus\Scripts\Master\IMasterData.cs" />
     <Compile Include="Assets\StarterAssets\ThirdPersonController\Scripts\ThirdPersonController.cs" />
     <Compile Include="Assets\ToraLib\Scripts\AssetBundle\CAssetBundleManager.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\DamageIndicator\DamageIndicator.cs" />
     <Compile Include="Assets\Magus\Scripts\Singleton\SceneController.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Projectiles\DOTAreaBase.cs" />
     <Compile Include="Assets\ToraLib\Scripts\UI\UIDialogBase.cs" />
     <Compile Include="Assets\ToraLib\Scripts\Unit\CUnitController.cs" />
     <Compile Include="Assets\Magus\UI\UIController.cs" />
+    <Compile Include="Assets\Magus\Scripts\Master\SpellMasterDataUnity.cs" />
     <Compile Include="Assets\StarterAssets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\ToraLib\Demo\Shmup\Scripts\Unit\PlaneUnit.cs" />
     <Compile Include="Assets\Magus\Scripts\Battle\InitState.cs" />
+    <Compile Include="Assets\Magus\Scripts\Master\SpellMasterData.cs" />
+    <Compile Include="Assets\UnityTechnologies\ParticlePack\Shared\Ramps\Runtime\RampAsset.cs" />
+    <Compile Include="Assets\UnityTechnologies\ParticlePack\Shared\Scripts\AdjustTimeScale.cs" />
+    <Compile Include="Assets\Magus\Scripts\Master\MasterData.cs" />
+    <Compile Include="Assets\UnityTechnologies\ParticlePack\Shared\Scripts\SimpleCameraController.cs" />
+    <Compile Include="Assets\UnityTechnologies\ParticlePack\Shared\Scripts\SimpleCharacterMotor.cs" />
     <Compile Include="Assets\Magus\Scripts\Chara\ModelController.cs" />
     <Compile Include="Assets\ToraLib\Scripts\FSM\State.cs" />
     <Compile Include="Assets\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
+    <Compile Include="Assets\Magus\Scripts\UI\UIPopupManager.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\PoolableHandler.cs" />
     <Compile Include="Assets\ToraLib\Demo\Shmup\Scripts\Unit\PlayerMovement.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\EffectManager.cs" />
     <Compile Include="Assets\Magus\Scripts\System\Types.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Spells\FireballSpellInstance.cs" />
     <Compile Include="Assets\ToraLib\Scripts\Camera\CFollowCamController.cs" />
+    <Compile Include="Assets\Magus\Scripts\Master\AbilityMasterData.cs" />
+    <Compile Include="Assets\Magus\Scripts\Chara\ProjectileAttackComponent.cs" />
     <Compile Include="Assets\ToraLib\Scripts\UI\UIAnimatedView.cs" />
     <Compile Include="Assets\Magus\Scripts\Weapons\AutoFireWeapon.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\DamageIndicator\DamageIndicator3d.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Spells\SpellType.cs" />
     <Compile Include="Assets\ToraLib\Demo\Shmup\Scripts\Unit\UnitGyro.cs" />
     <Compile Include="Assets\Magus\Scripts\Chara\EnemyController.cs" />
     <Compile Include="Assets\ToraLib\Demo\IsoGame\ClickDetector.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\ObjectPoolManager.cs" />
     <Compile Include="Assets\Magus\Scripts\Battle\Projectiles\ProjectileBase.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Effects\ExplosionEffect.cs" />
     <Compile Include="Assets\Magus\Scripts\Chara\GameCharaController.cs" />
     <Compile Include="Assets\StarterAssets\Mobile\Scripts\CanvasInputs\UICanvasControllerInput.cs" />
     <Compile Include="Assets\ToraLib\Scripts\UI\IUIView.cs" />
     <Compile Include="Assets\Magus\Scripts\AI\EnemyBaseAgent.cs" />
     <Compile Include="Assets\Samples\Input System\1.3.0\Simple Demo\SimpleController_UsingPlayerInput.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Ability\AbilityInfo.cs" />
     <Compile Include="Assets\Magus\Scripts\Battle\ProjectileAutospawner.cs" />
     <Compile Include="Assets\Magus\Scripts\Chara\IModelController.cs" />
     <Compile Include="Assets\ToraLib\Scripts\Camera\CCloneCamera.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Ability\IAbilityExecutor.cs" />
     <Compile Include="Assets\Magus\Scripts\Chara\CharaAnimationListener.cs" />
     <Compile Include="Assets\ToraLib\Scripts\FSM\IState.cs" />
     <Compile Include="Assets\ToraLib\Scripts\Singleton\SingletonComponent.cs" />
     <Compile Include="Assets\Magus\Scripts\Weapons\BasicProjectile.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\DamageReceiver.cs" />
     <Compile Include="Assets\StarterAssets\ThirdPersonController\Scripts\BasicRigidBodyPush.cs" />
     <Compile Include="Assets\ToraLib\Scripts\Test\CAssetLoadTest.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\Ability\AbilityExecutorFactory.cs" />
+    <Compile Include="Assets\Magus\Scripts\Master\MasterDataUnity.cs" />
     <Compile Include="Assets\Magus\Scripts\UI\CastMenu\UICastMenuView.cs" />
     <Compile Include="Assets\Magus\Scripts\Battle\Projectiles\FireballProjectile.cs" />
     <Compile Include="Assets\Samples\Input System\1.3.0\Simple Demo\SimpleController_UsingActionAsset.cs" />
     <Compile Include="Assets\StarterAssets\InputSystem\StarterAssetsInputs.cs" />
+    <Compile Include="Assets\Magus\Scripts\Battle\DamageIndicator\DamageIndicatorManager.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\TerrainSampleAssets\ThirdPartyNotices.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile-2-Pass.shader" />
     <None Include="Assets\Magus\UI\Test\test.uxml" />
+    <None Include="Assets\Magus\Stage\Shaders\CustomSurf.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
+    <None Include="Assets\Magus\Stage\Shaders\CustomSurfNew.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
+    <None Include="Assets\UnityTechnologies\ParticlePack\EffectExamples\Misc Effects\Prefabs\Readme_Dissolve_Respawn_.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\SDFFunctions.hlsl" />
     <None Include="Assets\StarterAssets\Environment\Shaders\Built-in_RP\Triplanar.shader" />
+    <None Include="Assets\UnityTechnologies\ParticlePack\EffectExamples\Magic Effects\Shaders\Ice.shader" />
+    <None Include="Assets\UnityTechnologies\ParticlePack\EffectExamples\Misc Effects\Shaders\Respawn.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface.shader" />
     <None Include="Assets\TextMesh Pro\Sprites\EmojiOne Attribution.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Custom-Atlas.shader" />
@@ -162,12 +205,16 @@
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\Samples\Polybrush\1.1.2\Shader Examples (Standard)\Shader\SimpleTextureBlend.shader" />
     <None Include="Assets\Samples\Polybrush\1.1.2\Shader Examples (Standard)\Shader\StandardVertexColor.shader" />
+    <None Include="Assets\Magus\Prefabs\Effects\Shaders\ExplosionShader.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
+    <None Include="Assets\UnityTechnologies\ParticlePack\EffectExamples\Misc Effects\Shaders\FireFly.shader" />
     <None Include="Assets\StarterAssets\Environment\Shaders\Built-in_RP\ArmatureShader.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile.shader" />
+    <None Include="Assets\Hovl Studio\Magic effects pack\Demo scene\Readme.txt" />
+    <None Include="Assets\TerrainSampleAssets\ShaderGraphs\CustomFunctions\CustomLighting.hlsl" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Sprite.shader" />
     <None Include="Assets\Samples\Polybrush\1.1.2\Shader Examples (Standard)\Shader\StandardTextureBlend.shader" />
   </ItemGroup>
@@ -974,6 +1021,18 @@
       <Project>{71DFDA63-6A12-EB38-6B42-D09D21405261}</Project>
       <Name>Unity.AI.Navigation.Player</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.RenderPipelines.HighDefinition.Config.Runtime.Player.csproj">
+      <Project>{85954B95-700C-593B-45B3-3A0E24D276A3}</Project>
+      <Name>Unity.RenderPipelines.HighDefinition.Config.Runtime.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.RenderPipeline.Universal.ShaderLibrary.Player.csproj">
+      <Project>{64EBE502-7E00-937D-2DAD-8A4A02AF542F}</Project>
+      <Name>Unity.RenderPipeline.Universal.ShaderLibrary.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.RenderPipelines.Universal.Shaders.Player.csproj">
+      <Project>{81BFC734-3E35-86FF-50BE-D08FF4F46210}</Project>
+      <Name>Unity.RenderPipelines.Universal.Shaders.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.ResourceManager.Player.csproj">
       <Project>{61C160F8-23BA-2718-9EDA-B0C2B120EA3E}</Project>
       <Name>Unity.ResourceManager.Player</Name>
@@ -1038,6 +1097,14 @@
       <Project>{88E8B6A6-D42B-7C67-C062-DB29F2636DE0}</Project>
       <Name>Unity.VisualScripting.Core.Player</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.RenderPipelines.Universal.Config.Runtime.Player.csproj">
+      <Project>{066AE43D-E28B-D49F-5DE1-23FB9EFEC159}</Project>
+      <Name>Unity.RenderPipelines.Universal.Config.Runtime.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.VisualEffectGraph.Runtime.Player.csproj">
+      <Project>{5243A9DF-767E-9C18-40B5-1559C7C34CA8}</Project>
+      <Name>Unity.VisualEffectGraph.Runtime.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.Profiling.Core.Player.csproj">
       <Project>{F995A3E0-5F08-F974-2A88-47A4FB182DA4}</Project>
       <Name>Unity.Profiling.Core.Player</Name>
@@ -1058,9 +1125,17 @@
       <Project>{848C50E4-1229-EEF7-0C4A-8D31FED4A65D}</Project>
       <Name>Cinemachine.Player</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.RenderPipelines.HighDefinition.Runtime.Player.csproj">
+      <Project>{097C7835-421C-382E-C24C-244CA776A785}</Project>
+      <Name>Unity.RenderPipelines.HighDefinition.Runtime.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.Mathematics.Player.csproj">
       <Project>{C50A48A9-3EB9-0549-F78A-081F3DDC32A0}</Project>
       <Name>Unity.Mathematics.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.RenderPipelines.Universal.Runtime.Player.csproj">
+      <Project>{09744FCB-F55F-E4D4-2E50-3B04700BBB12}</Project>
+      <Name>Unity.RenderPipelines.Universal.Runtime.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.ProBuilder.Player.csproj">
       <Project>{BAE30652-7F6D-CFF4-C7D6-3D31F1B8A365}</Project>
@@ -1105,6 +1180,10 @@
     <ProjectReference Include="UniTask.Player.csproj">
       <Project>{1A89DA7D-0A6E-8997-5253-F3999FAE3140}</Project>
       <Name>UniTask.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.RenderPipelines.Universal.2D.Runtime.Player.csproj">
+      <Project>{F10B331D-C218-339D-F322-87CD1A724DCB}</Project>
+      <Name>Unity.RenderPipelines.Universal.2D.Runtime.Player</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
