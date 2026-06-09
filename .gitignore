@@ -2,3 +2,12 @@ Library/
 Assets/TextMesh Pro/
 Temp/
 Logs/
+UserSettings/
+obj/
+
+
+*.csproj
+*.sln
+
+
+.vs/
