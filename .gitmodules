@@ -1,0 +1,3 @@
+[submodule "magus-unity/Assets/ToraLib"]
+	path = magus-unity/Assets/ToraLib
+	url = https://github.com/Toranyan/ToraLib
