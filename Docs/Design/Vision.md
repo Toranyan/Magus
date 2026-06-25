@@ -18,18 +18,6 @@ Success should come primarily from understanding systems and interactions.
 
 Mechanical skill should help but should not be the primary determinant of victory.
 
-### Every Spell Has Multiple Uses
-
-Spells should have offensive, defensive, and utility applications whenever possible.
-
-Players should discover creative uses for spells over time.
-
-### Interactions Create Depth
-
-The depth of the game comes from how spells, statuses, enemies, and environments interact.
-
-The goal is not to have hundreds of spells, but to create meaningful combinations.
-
 ## Player Fantasy
 
 The player is not a wizard throwing random fireballs.
