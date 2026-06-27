@@ -18,12 +18,15 @@ namespace magus.debug
 		{
 			await MasterData.LoadDataAsync();
 
-			var abilityMaster1 = MasterData.GetMasterData<AbilityMasterData>("ability_fireball_01");
-			var abilityMaster2 = MasterData.GetMasterData<AbilityMasterData>("ability_blackhole_01");
+			var spellMaster1 = MasterData.GetMasterData<SpellMasterData>("spell_fireball_01");
+			var spellMaster2 = MasterData.GetMasterData<SpellMasterData>("spell_blackhole_01");
 
 			var playerController = BattleController.Instance.PlayerController;
-			playerController.SetAbility(0, new AbilityInfo(abilityMaster1, playerController));
-			playerController.SetAbility(1, new AbilityInfo(abilityMaster2, playerController));
+
+			var unitSpell1 = new UnitSpellInstance(new SpellInfo(spellMaster1), playerController);
+			var unitSpell2 = new UnitSpellInstance(new SpellInfo(spellMaster2), playerController);
+			playerController.SetSpell(0, unitSpell1);
+			playerController.SetSpell(1, unitSpell2);
 		}
 	}
 }
