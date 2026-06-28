@@ -7,18 +7,18 @@ namespace magus.battle
 {
     public static class SpellExecutorFactory
     {
-        private static readonly Dictionary<SpellType, Func<ISpellExecutor>> _map = new()
+        private static readonly Dictionary<SpellExecutorType, Func<ISpellExecutor>> _map = new()
         {
-            { SpellType.Fireball, () => new FireballSpellExecutor() },
-            // TODO: register remaining 17 Tier 1 spell executors as they are implemented
+            { SpellExecutorType.Projectile, () => new ProjectileSpellExecutor() },
+            // TODO: register additional executor types as they are implemented
         };
 
         public static ISpellExecutor Create(SpellInfo info)
         {
-            if (_map.TryGetValue(info.SpellType, out var factory))
+            if (_map.TryGetValue(info.ExecutorType, out var factory))
                 return factory();
 
-            Debug.LogError($"[SpellExecutorFactory] No executor registered for SpellType {info.SpellType}");
+            Debug.LogError($"[SpellExecutorFactory] No executor registered for SpellExecutorType {info.ExecutorType}");
             return null;
         }
     }

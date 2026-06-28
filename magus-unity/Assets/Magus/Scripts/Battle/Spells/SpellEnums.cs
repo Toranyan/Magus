@@ -2,9 +2,16 @@ namespace magus.battle
 {
     public enum SpellType
     {
-        Fireball = 0,
-        WaterJet = 1,
-        // TODO: add remaining 16 Tier 1 spell types
+        Fireball  = 0,
+        WaterJet  = 1,
+        BlackHole = 2,
+        // TODO: add remaining 15 Tier 1 spell types
+    }
+
+    public enum SpellExecutorType
+    {
+        Projectile = 0,
+        // TODO: DOTArea, Barrier, Buff, Debuff as needed
     }
 
     public enum ElementType

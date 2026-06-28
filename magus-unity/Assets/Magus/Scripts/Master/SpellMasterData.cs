@@ -10,6 +10,7 @@ namespace magus.master
         public string Description;
 
         public SpellType SpellType;
+        public SpellExecutorType ExecutorType;
         public ElementType Element;
         public StrategicCategory Category;
         public SpellTargetingType TargetingType;

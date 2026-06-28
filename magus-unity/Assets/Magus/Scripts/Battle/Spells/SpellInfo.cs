@@ -12,6 +12,7 @@ namespace magus.battle
         public string Description { get; }
 
         public SpellType SpellType { get; }
+        public SpellExecutorType ExecutorType { get; }
         public ElementType Element { get; }
         public StrategicCategory Category { get; }
         public SpellTargetingType TargetingType { get; }
@@ -40,8 +41,9 @@ namespace magus.battle
             Name        = data.Name;
             Description = data.Description;
 
-            SpellType     = data.SpellType;
-            Element       = data.Element;
+            SpellType    = data.SpellType;
+            ExecutorType = data.ExecutorType;
+            Element      = data.Element;
             Category      = data.Category;
             TargetingType = data.TargetingType;
 
