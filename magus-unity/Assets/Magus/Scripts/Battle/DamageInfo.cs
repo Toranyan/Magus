@@ -1,23 +1,27 @@
-
 using UnityEngine;
 
 namespace magus.battle
 {
-    public class DamageInfo
+    /// <summary>
+    /// Immutable value describing a single combat hit.
+    /// Constructed by DamageDealer and passed through the damage pipeline.
+    /// </summary>
+    public struct DamageInfo
     {
         public float Amount;
-        public IBattleEntity Source;
-        public IBattleEntity Receiver;
         public DamageType Type;
-        public Vector3 Location;
-        public DamageInfo(float amount, IBattleEntity source, IBattleEntity receiver, DamageType type, Vector3 location)
-        {
-            Amount = amount;
-            Source = source;
-            Receiver = receiver;
-            Type = type;
-            Location = location;
-		}
+        public ElementType Element;
 
-	}
+        /// <summary>The entity that initiated the damage.</summary>
+        public IBattleEntity Source;
+
+        /// <summary>Team of the source at the time of the hit.</summary>
+        public int SourceTeamId;
+
+        public Vector3 HitPosition;
+        public Vector3 HitNormal;
+        public Vector3 KnockbackDirection;
+        public float KnockbackForce;
+        public bool IsCritical;
+    }
 }

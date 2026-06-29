@@ -84,7 +84,7 @@ namespace magus.ui
         private void OnGlobalDamageReceived(DamageInfo damageInfo)
         {
 			//Transform world position to screen position
-            Vector3 screenPosition = Camera.main.WorldToScreenPoint(damageInfo.Location);
+            Vector3 screenPosition = Camera.main.WorldToScreenPoint(damageInfo.HitPosition);
 
 			//transform screen position to UI position
             RectTransformUtility.ScreenPointToLocalPointInRectangle(

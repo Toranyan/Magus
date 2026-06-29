@@ -1,5 +1,13 @@
 namespace magus.battle
 {
+    public enum DamageType
+    {
+        Physical,
+        Magical,
+        True,
+    }
+
+
     public enum SpellType
     {
         Fireball  = 0,

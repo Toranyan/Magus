@@ -1,124 +1,110 @@
-using Cysharp.Threading.Tasks;
-using magus.chara;
 using System;
 using UnityEngine;
 
 namespace magus.battle
 {
-	public class ProjectileBase : MonoBehaviour
-	{
+    /// <summary>
+    /// Handles projectile movement and lifetime.
+    /// Damage delivery is handled by the attached DamageDealer.
+    /// Collision detection is handled here and forwarded to DamageDealer.
+    /// </summary>
+    public class ProjectileBase : MonoBehaviour
+    {
+        [SerializeField]
+        private float _lifeTime = 10f;
 
-		[SerializeField]
-		private float _damage;
+        [SerializeField]
+        private string _deathEffectId;
 
-		[SerializeField]
-		private float _lifeTime = 10;
+        [SerializeField]
+        private bool _killOnCollision = true;
 
-		[SerializeField]
-		private string _deathEffectId;
+        [SerializeField]
+        private DamageDealer _damageDealer;
 
-		[SerializeField]
-		private bool _killOnCollision = true;
+        private Vector3 _velocity;
+        private bool _isAlive;
+        private float _aliveTime;
 
-		private Vector3 _vecVelocity;
+        public DamageDealer DamageDealer => _damageDealer;
 
-		private bool _isAlive;
-		private float _aliveTime;
+        public bool IsKillOnCollide
+        {
+            get => _killOnCollision;
+            set => _killOnCollision = value;
+        }
 
-		public IBattleEntity Owner { get; private set; }
+        public event Action<ProjectileBase> Killed;
 
-		// Expose the kill-on-collision flag
-		public bool IsKillOnCollide
-		{
-			get => _killOnCollision;
-			set => _killOnCollision = value;
-		}
+        /// <summary>
+        /// Fired when the projectile dies so external services (e.g. EffectManager) can spawn the effect.
+        /// Gameplay code should not directly spawn visual effects.
+        /// </summary>
+        public event Action<string, Vector3> EffectRequested;
 
-		public event Action<ProjectileBase> Killed;
+        public void SetOwner(IBattleEntity owner)
+        {
+            _damageDealer?.SetOwner(owner);
+        }
 
-		public void Setup(Vector3 initialVelocity)
-		{
-			_vecVelocity = initialVelocity;
-			_isAlive = true;
-			_aliveTime = 0;
-		}
+        public void Setup(Vector3 initialVelocity)
+        {
+            _velocity = initialVelocity;
+            _isAlive = true;
+            _aliveTime = 0f;
+            _damageDealer?.BeginAttack();
+        }
 
-		public void ClearEvents()
-		{
-			Killed = null;
-		}
+        public void ClearEvents()
+        {
+            Killed = null;
+            EffectRequested = null;
+        }
 
-		public void Kill()
-		{
-			_isAlive = false;
-			gameObject.SetActive(false);
+        public void Kill()
+        {
+            if (!_isAlive) return;
+            _isAlive = false;
+            _damageDealer?.EndAttack();
+            gameObject.SetActive(false);
 
-			CreateDeathEffect();
+            if (!string.IsNullOrEmpty(_deathEffectId))
+            {
+                EffectRequested?.Invoke(_deathEffectId, transform.position);
+            }
 
-			Killed?.Invoke(this);
-		}
+            Killed?.Invoke(this);
+        }
 
-		
+        private void Update()
+        {
+            if (!_isAlive) return;
 
-		public void SetOwner(IBattleEntity owner)
-		{
-			Owner = owner;
-		}
+            _aliveTime += Time.deltaTime;
+            if (_aliveTime >= _lifeTime)
+            {
+                Kill();
+                return;
+            }
 
-		private void Update()
-		{
+            transform.position += _velocity * Time.deltaTime;
+        }
 
-			if (_aliveTime >= _lifeTime)
-			{
-				Kill();
-			}
-			_aliveTime += Time.deltaTime;
+        private void OnTriggerEnter(Collider other)
+        {
+            if (!_isAlive) return;
 
-			transform.position += Time.deltaTime * _vecVelocity;
-		}
+            var receiver = other.GetComponent<DamageReceiver>();
+            if (receiver == null) return;
 
-		private void OnTriggerEnter(Collider other)
-		{
-			var obj = other.gameObject.GetComponent<DamageReceiver>();
-			if (obj != null)
-			{
-				OnCollideDamageReceiver(obj);
-			}
-		}
+            bool hit = _damageDealer != null
+                ? _damageDealer.TryDamage(receiver, transform.position, -transform.forward)
+                : false;
 
-		private void OnCollideDamageReceiver(DamageReceiver obj)
-		{
-			//determine if same team
-			//apply damage
-			//delete
-			if(!_isAlive)
-			{
-				return;
-			}
-			if (obj.TeamId == Owner.TeamId)
-			{
-				return;
-			}
-			Debug.Log($"Collision : {name} x {obj.name}");
-
-			obj.Damage(new DamageInfo(
-				amount: _damage,
-				source: Owner,
-				receiver: obj.GetComponent<IBattleEntity>(),
-				location: transform.position,
-				type: DamageType.Physical
-			));
-
-			if (_killOnCollision)
-			{
-				Kill();
-			}
-		}
-
-		private void CreateDeathEffect()
-		{
-			BattleController.Instance.EffectManager.CreateEffect(_deathEffectId, transform.position).Forget();
-		}
-
-	}
+            if (hit && _killOnCollision)
+            {
+                Kill();
+            }
+        }
+    }
 }

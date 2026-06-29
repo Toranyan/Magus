@@ -13,8 +13,14 @@ namespace magus.chara
         [SerializeField]
         private GameCharaController _gameCharaController;
 
-        public int TeamId => _gameCharaController.TeamId;
+        [SerializeField]
+        private Unit _unit;
+
+        public int TeamId => _unit != null ? _unit.TeamId : _gameCharaController.TeamId;
         public GameObject GameObject => this.gameObject;
+
+        /// <summary>The Unit component used as IBattleEntity when casting spells.</summary>
+        public Unit Unit => _unit;
 
         // Three prepared spell slots
         private UnitSpellInstance[] _preparedSpells = new UnitSpellInstance[3];
@@ -99,10 +105,11 @@ namespace magus.chara
                 ? _targetEnemy.transform.position
                 : transform.position + transform.forward * spell.Info.Range;
 
+            IBattleEntity caster = _unit != null ? (IBattleEntity)_unit : this;
             var context = new SpellCastContext
             {
                 Info          = spell.Info,
-                Caster        = this,
+                Caster        = caster,
                 Target        = _targetEnemy,
                 CastPosition  = transform.position,
                 TargetPosition = targetPos,
