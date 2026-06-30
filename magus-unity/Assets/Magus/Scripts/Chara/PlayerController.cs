@@ -113,7 +113,6 @@ namespace magus.chara
                 Target        = _targetEnemy,
                 CastPosition  = transform.position,
                 TargetPosition = targetPos,
-                IsCounter     = false, // TODO: set true when counter window is active
             };
 
             spell.TryCast(context);

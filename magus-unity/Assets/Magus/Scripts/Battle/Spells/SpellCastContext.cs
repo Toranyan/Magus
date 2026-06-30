@@ -12,7 +12,5 @@ namespace magus.battle
         public Vector3 CastPosition;
         public Vector3 TargetPosition;
 
-        // TODO: set to true when this cast is resolving a counter window
-        public bool IsCounter;
     }
 }

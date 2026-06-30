@@ -31,7 +31,6 @@ namespace magus.battle.spells.executors
             proj.Setup(dir.normalized * context.Info.Speed);
 
             // TODO: set elemental damage type on projectile (requires DamageType per element)
-            // TODO: handle IsCounter — modify behaviour based on element (e.g. reflect, extinguish)
         }
     }
 }

@@ -23,14 +23,39 @@ namespace magus.battle
         public float CurrentMana { get; private set; }
         public float MaxMana => _maxMana;
 
+        public bool IsCasting { get; private set; }
+
         public event Action Killed;
         public event Action<DamageInfo> DamageReceived;
         public event Action<float> ManaChanged;
+        public event Action CastInterrupted;
 
         public void Setup()
         {
             CurrentHp = _maxHp;
             CurrentMana = _maxMana;
+            IsCasting = false;
+        }
+
+        public void StartCast()
+        {
+            IsCasting = true;
+        }
+
+        public void EndCast()
+        {
+            IsCasting = false;
+        }
+
+        /// <summary>
+        /// Cancels an active cast. Called by ReceiveDamage on a heavy hit, or by stun.
+        /// No-op if not currently casting.
+        /// </summary>
+        public void InterruptCast()
+        {
+            if (!IsCasting) return;
+            IsCasting = false;
+            CastInterrupted?.Invoke();
         }
 
         public void ReceiveDamage(DamageInfo info)
@@ -38,7 +63,11 @@ namespace magus.battle
             if (!IsAlive) return;
             CurrentHp = Mathf.Max(0f, CurrentHp - info.Amount);
             DamageReceived?.Invoke(info);
-            if (!IsAlive) Killed?.Invoke();
+            if (!IsAlive)
+            {
+                InterruptCast();
+                Killed?.Invoke();
+            }
         }
 
         public void Heal(float amount)

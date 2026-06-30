@@ -21,7 +21,7 @@ The system should be component-based and avoid tightly coupling gameplay systems
 
 # Architecture
 
-Combat consists of four primary gameplay components.
+Combat consists of three primary gameplay components.
 
 ```
 DamageDealer
@@ -31,9 +31,6 @@ DamageReceiver
         │
         ▼
 Unit
-        │
-        ▼
-Health
 ```
 
 Presentation is handled separately.
@@ -61,33 +58,14 @@ Represents an entity that participates in combat.
 Responsibilities:
 
 * Team ownership
+* HP and mana
+* Cast state
 * Receive incoming damage
 * Coordinate combat systems
-* Own references to gameplay components
 
-Example references:
+HP and mana live directly on Unit as fields — they are intrinsic to the entity and do not warrant separate components. Adding a resource (e.g. stamina) means adding fields to Unit, not adding a new component.
 
-* Health
-* Stats
-* StatusController
-
-A Unit is the root combat object.
-
----
-
-## Health
-
-Responsible only for health.
-
-Responsibilities:
-
-* Current HP
-* Max HP
-* Apply damage
-* Healing
-* Death state
-
-Health should not know anything about collisions or hit detection.
+A Unit is the root combat object. See `Unit.md` for full design.
 
 ---
 
@@ -145,18 +123,18 @@ Immutable struct describing a combat hit.
 
 Should contain:
 
-* Damage
+* Damage amount
 * Damage type
 * Element
 * Source Unit
-* Target Unit
-* Team ID
+* Source Team ID
 * Hit Position
 * Hit Normal
 * Knockback Direction
 * Knockback Force
 * Critical Hit
-* Additional metadata as needed
+
+The target is implicit — DamageInfo is always delivered directly to the target's DamageReceiver, so there is no need to carry a target reference inside the struct.
 
 ---
 
