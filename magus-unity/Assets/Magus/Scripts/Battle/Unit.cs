@@ -4,51 +4,61 @@ using UnityEngine;
 namespace magus.battle
 {
     /// <summary>
-    /// Root combat object. Owns team identity, health, and damage coordination.
-    /// Attach alongside Health on any entity that participates in combat.
+    /// Root combat object. Owns team identity, HP, and mana.
+    /// Attach to any entity that participates in combat.
     /// </summary>
     public class Unit : MonoBehaviour, IBattleEntity
     {
-        [SerializeField]
-        private int _teamId;
-
-        [SerializeField]
-        private Health _health;
+        [SerializeField] private int _teamId;
+        [SerializeField] private float _maxHp;
+        [SerializeField] private float _maxMana;
 
         public int TeamId => _teamId;
         public GameObject GameObject => gameObject;
-        public Health Health => _health;
-        public bool IsAlive => _health != null && !_health.IsDead;
+
+        public float CurrentHp { get; private set; }
+        public float MaxHp => _maxHp;
+        public bool IsAlive => CurrentHp > 0f;
+
+        public float CurrentMana { get; private set; }
+        public float MaxMana => _maxMana;
 
         public event Action Killed;
         public event Action<DamageInfo> DamageReceived;
-
-        private void Awake()
-        {
-            if (_health != null)
-            {
-                _health.Died += OnHealthDied;
-            }
-        }
+        public event Action<float> ManaChanged;
 
         public void Setup()
         {
-            _health?.Setup();
+            CurrentHp = _maxHp;
+            CurrentMana = _maxMana;
         }
 
-        /// <summary>
-        /// Entry point for all incoming damage. Called by DamageReceiver.
-        /// </summary>
         public void ReceiveDamage(DamageInfo info)
         {
             if (!IsAlive) return;
-            _health?.ApplyDamage(info.Amount);
+            CurrentHp = Mathf.Max(0f, CurrentHp - info.Amount);
             DamageReceived?.Invoke(info);
+            if (!IsAlive) Killed?.Invoke();
         }
 
-        private void OnHealthDied()
+        public void Heal(float amount)
         {
-            Killed?.Invoke();
+            if (!IsAlive) return;
+            CurrentHp = Mathf.Min(_maxHp, CurrentHp + amount);
+        }
+
+        public bool TrySpendMana(float amount)
+        {
+            if (CurrentMana < amount) return false;
+            CurrentMana -= amount;
+            ManaChanged?.Invoke(CurrentMana);
+            return true;
+        }
+
+        public void RestoreMana(float amount)
+        {
+            CurrentMana = Mathf.Min(_maxMana, CurrentMana + amount);
+            ManaChanged?.Invoke(CurrentMana);
         }
     }
 }

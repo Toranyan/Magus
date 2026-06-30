@@ -15,10 +15,10 @@ namespace magus.chara
         [SerializeField]
         private DamageReceiver _damageReceiver;
 
-        public float DetectRange => _unit != null ? _detectRange : 0f;
-
         [SerializeField]
         private float _detectRange;
+
+        public float DetectRange => _detectRange;
 
         public int TeamId => _unit != null ? _unit.TeamId : 0;
 
