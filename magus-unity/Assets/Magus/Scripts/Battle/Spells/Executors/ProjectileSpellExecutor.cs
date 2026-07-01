@@ -19,8 +19,16 @@ namespace magus.battle.spells.executors
 
             proj.transform.SetParent(null);
 
+
+			// determine origin
             var castPos = context.CastPosition;
-            castPos.y += 1f;
+			castPos.y += 1f;
+			// if caster is a unit, find projectile origin transform
+			var caster = context.Caster as Unit;
+            if (caster != null)
+            {
+                castPos = caster.ProjectileOrigin ? caster.ProjectileOrigin.position : castPos;
+            }
             proj.transform.position = castPos;
 
             var targetPos = context.TargetPosition;

@@ -283,4 +283,4 @@ Always use braces on control statements.
 
 Keep each component focused on a single responsibility.
 
-Avoid singleton dependencies inside gameplay systems.
+Scene-wide services (ProjectileManager, EffectManager, AudioManager) are accessed through BattleController.Instance. This is intentional — prefab-based components cannot hold serialized references to scene objects, so injection is not a practical option at this scale.

@@ -1,58 +1,27 @@
 using UnityEngine;
-using magus.battle;
 using System;
 
 namespace magus.chara
 {
-    public class GameCharaController : MonoBehaviour, IBattleEntity
+    /// <summary>
+    /// Bridges the controller layer to ModelController.
+    /// Responsible for movement direction and death animation sequencing only.
+    /// Does not know about Unit, combat, or teams.
+    /// </summary>
+    public class GameCharaController : MonoBehaviour
     {
-        [SerializeField]
-        private ModelController _modelController;
+        [SerializeField] private ModelController _modelController;
 
-        [SerializeField]
-        private Unit _unit;
+        public event Action DeathAnimationFinished;
 
-        [SerializeField]
-        private DamageReceiver _damageReceiver;
-
-        [SerializeField]
-        private float _detectRange;
-
-        public float DetectRange => _detectRange;
-
-        public int TeamId => _unit != null ? _unit.TeamId : 0;
-
-        public GameObject GameObject => this.gameObject;
-
-        public bool IsAlive => _unit != null && _unit.IsAlive;
-
-        public event Action Killed;
-
-        private bool _isInitialized;
-
-        public void Init()
+        private void Awake()
         {
-            if (_isInitialized) return;
-
-            _unit.Killed += OnUnitKilled;
             _modelController.DeathAnimationFinished += OnDeathAnimationFinished;
-
-            _isInitialized = true;
         }
 
         public void Setup()
         {
-            Killed = null;
             _modelController.Setup();
-            _damageReceiver.ClearEvents();
-            _unit.Setup();
-        }
-
-        public void Kill()
-        {
-            Debug.Log($"{name} killed");
-            Killed?.Invoke();
-            _modelController.StartDeathAnimation();
         }
 
         public void SetMoveVector(Vector3 moveVec)
@@ -60,23 +29,14 @@ namespace magus.chara
             _modelController.SetMoveVector(moveVec);
         }
 
-        private void OnUnitKilled()
+        public void StartDeathAnimation()
         {
-            Kill();
+            _modelController.StartDeathAnimation();
         }
 
         private void OnDeathAnimationFinished()
         {
-            var handle = GetComponent<PoolableHandler>();
-            if (handle)
-            {
-                handle.ReturnToPool();
-                gameObject.SetActive(false);
-            }
-            else
-            {
-                gameObject.SetActive(false);
-            }
+            DeathAnimationFinished?.Invoke();
         }
     }
 }

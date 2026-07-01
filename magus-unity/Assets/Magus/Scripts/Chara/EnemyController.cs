@@ -1,6 +1,4 @@
 using magus.battle;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using System;
 
@@ -8,160 +6,147 @@ namespace magus.chara
 {
     public class EnemyController : MonoBehaviour
     {
-		[SerializeField]
-		private GameCharaController _charaController;
+        [SerializeField] private Unit _unit;
+        [SerializeField] private GameCharaController _charaController;
+        [SerializeField] private float _detectRange;
+        [SerializeField] private MonoBehaviour _attackBehaviour;
 
-		[SerializeField]
-		private ProjectileAttackComponent _projAttackComponent;
+        private IUnitAttack _attack;
+        private Unit _target;
+        private State _state;
 
-		private bool _isInitialized = false;
+        public event Action<EnemyController> Killed;
 
-		private GameCharaController _targetChara;
+        private enum State { Idle, Chase, Attack }
 
-		public Action<EnemyController> Killed;
+        private void Awake()
+        {
+            _attack = _attackBehaviour as IUnitAttack;
+            if (_attack == null)
+                Debug.LogError($"[EnemyController] {name}: _attackBehaviour does not implement IUnitAttack.");
 
-		private enum State
-		{
-			Idle,
-			Follow,
-			Attack,
-		}
+            _unit.Killed += OnUnitKilled;
+            _charaController.DeathAnimationFinished += OnDeathAnimationFinished;
+        }
 
-		public void Awake()
-		{
-			Init();
-		}
+        private void OnEnable()
+        {
+            Setup();
+        }
 
-		public void Init()
-		{
-			if(_isInitialized)
-			{
-				return;
-			}
-			_charaController.Init();
-			_isInitialized = true;
-		}
+        private void Setup()
+        {
+            _unit.Setup();
+            _charaController.Setup();
+            _attack?.SetOwner(_unit);
+            _target = null;
+            _state = State.Idle;
+        }
 
-		public void OnEnable()
-		{
-			//TODO manual setup
-			Setup();
-		}
+        private void Update()
+        {
+            if (!_unit.IsAlive) return;
 
-		public void Setup()
-		{
-			_charaController.Setup();
-			_charaController.Killed += OnKilled;
-			_projAttackComponent.Setup(_charaController);
-		}
+            switch (_state)
+            {
+                case State.Idle:   UpdateIdle();   break;
+                case State.Chase:  UpdateChase();  break;
+                case State.Attack: UpdateAttack(); break;
+            }
+        }
 
-		private void Update()
-		{
-			if (!_charaController.IsAlive)
-			{
-				return;
-			}
+        private void UpdateIdle()
+        {
+            _charaController.SetMoveVector(Vector3.zero);
+            _target = FindTarget();
+            if (_target != null)
+                SetState(State.Chase);
+        }
 
-			if (_targetChara == null)
-			{
-				_charaController.SetMoveVector(Vector3.zero);
-				FindTarget();
-			} else
-			{
-				var dist = Vector3.Distance(_targetChara.transform.position, transform.position);
-				if (dist <= _projAttackComponent.AttackRange)
-				{
-					_charaController.SetMoveVector(Vector3.zero);
-					AttackTarget(_targetChara);
-				} else if (_projAttackComponent.IsRecoiling)
-				{
-					//Unable to move
-				} else 
-				{
-					MoveTowardTarget(_targetChara.transform.position);
-				}
-			}
+        private void UpdateChase()
+        {
+            if (!IsTargetValid())
+            {
+                SetState(State.Idle);
+                return;
+            }
 
-		}
+            float dist = Vector3.Distance(_target.transform.position, transform.position);
+            if (dist <= _attack.Range)
+            {
+                SetState(State.Attack);
+                return;
+            }
 
-		private void MoveTowardTarget(Vector3 targetPos)
-		{
-			var vecDelta = targetPos - transform.position;
-			_charaController.SetMoveVector(vecDelta);
-		}
+            _charaController.SetMoveVector(_target.transform.position - transform.position);
+        }
 
+        private void UpdateAttack()
+        {
+            if (!IsTargetValid())
+            {
+                SetState(State.Idle);
+                return;
+            }
 
-		private void FindTarget()
-		{
-			var layer = LayerMask.NameToLayer("Character");
-			var mask = 1 << layer;
-			var colliders = Physics.OverlapSphere(transform.position, _charaController.DetectRange, mask);
+            float dist = Vector3.Distance(_target.transform.position, transform.position);
+            if (dist > _attack.Range)
+            {
+                SetState(State.Chase);
+                return;
+            }
 
-			//get closest
-			var closestDist = _targetChara ? Vector3.Distance(_targetChara.transform.position, transform.position) : float.MaxValue;
-			foreach (var col in colliders)
-			{
-				var chara = col.GetComponent<GameCharaController>();
-				if (chara)
-				{
-					if (chara.TeamId != _charaController.TeamId)
-					{
-						if (_targetChara == null)
-						{
-							_targetChara = chara;
-							closestDist = Vector3.Distance(_targetChara.transform.position, transform.position);
-						} else
-						{
-							var dist = Vector3.Distance(chara.transform.position, transform.position);
+            _charaController.SetMoveVector(Vector3.zero);
+            _attack?.Attack(_target.transform.position);
+        }
 
-							if (dist < closestDist)
-							{
-								_targetChara = chara;
-								closestDist = Vector3.Distance(_targetChara.transform.position, transform.position);
-							}
-						}
-					}
-				}
-			}
+        private void SetState(State state)
+        {
+            _state = state;
+        }
 
-		}
+        private bool IsTargetValid()
+        {
+            return _target != null && _target.IsAlive;
+        }
 
-		private void Attack()
-		{
-			if (_targetChara != null)
-			{
-				AttackTarget(_targetChara);
-			} else
-			{
-				AttackEmpty();
-			}
-		}
+        private Unit FindTarget()
+        {
+            var mask = LayerMask.GetMask("Character");
+            var colliders = Physics.OverlapSphere(transform.position, _detectRange, mask);
 
-		private void AttackTarget(GameCharaController chara)
-		{
-			var attackComponent = GetComponent<ProjectileAttackComponent>();
+            Unit closest = null;
+            float closestDistSqr = float.MaxValue;
 
-			attackComponent.AttackTarget(chara);
+            foreach (var col in colliders)
+            {
+                var unit = col.GetComponent<Unit>();
+                if (unit == null || unit == _unit || unit.TeamId == _unit.TeamId || !unit.IsAlive)
+                    continue;
 
-		}
+                float distSqr = (col.transform.position - transform.position).sqrMagnitude;
+                if (distSqr < closestDistSqr)
+                {
+                    closest = unit;
+                    closestDistSqr = distSqr;
+                }
+            }
 
-		/// <summary>
-		/// Attack with no target
-		/// </summary>
-		private void AttackEmpty()
-		{
+            return closest;
+        }
 
-		}
+        private void OnUnitKilled()
+        {
+            _charaController.StartDeathAnimation();
+            Killed?.Invoke(this);
+        }
 
-		private void OnKilled()
-		{
-			//Call listeners 
-
-			Killed?.Invoke(this);
-
-			//TODO score? exp?
-		}
-
-	}
-
+        private void OnDeathAnimationFinished()
+        {
+            var handle = GetComponent<PoolableHandler>();
+            if (handle)
+                handle.ReturnToPool();
+            gameObject.SetActive(false);
+        }
+    }
 }

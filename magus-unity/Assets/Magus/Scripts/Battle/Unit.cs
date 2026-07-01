@@ -13,6 +13,9 @@ namespace magus.battle
         [SerializeField] private float _maxHp;
         [SerializeField] private float _maxMana;
 
+        [SerializeField]
+        private Transform _projectileOrigin;
+
         public int TeamId => _teamId;
         public GameObject GameObject => gameObject;
 
@@ -24,6 +27,8 @@ namespace magus.battle
         public float MaxMana => _maxMana;
 
         public bool IsCasting { get; private set; }
+
+        public Transform ProjectileOrigin => _projectileOrigin;
 
         public event Action Killed;
         public event Action<DamageInfo> DamageReceived;
