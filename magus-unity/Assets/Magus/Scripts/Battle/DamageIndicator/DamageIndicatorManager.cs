@@ -8,15 +8,12 @@ namespace magus.ui
     public class DamageIndicatorManager : MonoBehaviour
     {
         [SerializeField]
-        private DamageIndicator _damageIndicatorPrefab;
+        private DamageIndicator3d _damageIndicatorPrefab;
 
         [SerializeField]
         private Transform _indicatorContainer;
 
-        [SerializeField]
-        private Canvas _canvas;
-
-        private ObjectPool<DamageIndicator> _indicatorPool;
+        private ObjectPool<DamageIndicator3d> _indicatorPool;
 
         public void Awake()
         {
@@ -36,7 +33,7 @@ namespace magus.ui
 
 		public void Initialize()
         {
-            _indicatorPool = new ObjectPool<DamageIndicator>(
+            _indicatorPool = new ObjectPool<DamageIndicator3d>(
                 createFunc: CreateDamageIndicator,
                 actionOnGet: indicator => indicator.gameObject.SetActive(true),
                 actionOnRelease: indicator => indicator.gameObject.SetActive(false),
@@ -46,36 +43,35 @@ namespace magus.ui
                 maxSize: 100
             );
         }
-        public DamageIndicator GetIndicator()
+        public DamageIndicator3d GetIndicator()
         {
             return _indicatorPool.Get();
         }
-        public void ReleaseIndicator(DamageIndicator indicator)
+        public void ReleaseIndicator(DamageIndicator3d indicator)
         {
             _indicatorPool.Release(indicator);
         }
 
 
-        public DamageIndicator CreateDamageIndicator()
+        public DamageIndicator3d CreateDamageIndicator()
         {
-            var indicator = Instantiate(_damageIndicatorPrefab, transform);
-            indicator.transform.SetParent(_indicatorContainer);
+            var indicator = Instantiate(_damageIndicatorPrefab, _indicatorContainer);
             indicator.Finished += () => {
                 ReleaseIndicator(indicator);
             };
 			return indicator;
         }
 
-        public void ShowIndicator(Vector3 position, float damageAmount, Color color, float size)
+        public void ShowIndicator(Vector3 worldPosition, float damageAmount, Color color, float size)
         {
             var indicator = GetIndicator();
-            indicator.transform.localPosition = position;
+            indicator.transform.position = worldPosition;
 
             indicator.Setup(damageAmount, color, size);
             indicator.StartAnimation();
 		}
 
-        public void HideIndicator(DamageIndicator indicator)
+        public void HideIndicator(DamageIndicator3d indicator)
         {
             _indicatorPool.Release(indicator);
         }
@@ -83,24 +79,11 @@ namespace magus.ui
 
         private void OnGlobalDamageReceived(DamageInfo damageInfo)
         {
-			//Transform world position to screen position
-            Vector3 screenPosition = Camera.main.WorldToScreenPoint(damageInfo.HitPosition);
-
-			//transform screen position to UI position
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                _indicatorContainer as RectTransform,
-                screenPosition,
-                _canvas.renderMode == RenderMode.ScreenSpaceOverlay
-                    ? null
-                    : _canvas.worldCamera,
-                out Vector2 uiPosition
-            );
-
 			//TODO resolve color based on damage type
 
 			//TODO resolve size based on damage amount
 
-			ShowIndicator(uiPosition, damageInfo.Amount, Color.red, 24f);
+			ShowIndicator(damageInfo.HitPosition, damageInfo.Amount, Color.red, 1.5f);
 		}
 
 

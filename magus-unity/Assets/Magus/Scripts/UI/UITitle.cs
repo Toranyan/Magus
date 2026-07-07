@@ -11,7 +11,7 @@ using magus.system;
 
 namespace magus.ui {
 
-	public class UITitle : MonoBehaviour {
+	public class UITitle : UIViewBase {
 
 		#region Serialized Fields
 		[SerializeField]
@@ -43,7 +43,9 @@ namespace magus.ui {
 		}
 
 		private void OnClickOptionsButton() {
-			_optionsWindow.Open();
+			//UIManager wraps the view in a ViewState and pushes it - no direct
+			//UIStateManager reference needed here
+			UIManager.Instance.PushView(_optionsWindow);
 		}
 
 		#endregion
