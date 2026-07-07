@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using Cysharp.Threading.Tasks;
 using tora.singleton;
 using tora.ui;
 
@@ -21,7 +23,17 @@ namespace magus.ui
 
         public Canvas MainCanvas => _mainCanvas;
 
+        /// <summary>
+        /// Views are addressed by AddressableAutoSetting's convention: address == path
+        /// relative to Assets/Magus/Addressables/, no extension. View prefabs live under
+        /// Assets/Magus/Addressables/UI/Views/, so a view type's address is
+        /// "UI/Views/{type name}" (e.g. UITitle.prefab at Addressables/UI/Views/UITitle.prefab
+        /// -> "UI/Views/UITitle").
+        /// </summary>
+        private const string ViewAddressPrefix = "UI/Views/";
+
         private readonly Dictionary<Type, UIViewBase> _views = new();
+        private readonly Dictionary<Type, UniTask<UIViewBase>> _pendingLoads = new();
 
         /// <summary>Returns the cached instance for this view type, instantiating it under the UI root on first use.</summary>
         public T GetOrCreateView<T>(T prefab) where T : UIViewBase
@@ -30,6 +42,33 @@ namespace magus.ui
                 return (T)existing;
 
             var view = Instantiate(prefab, _root);
+            _views[typeof(T)] = view;
+            return view;
+        }
+
+        /// <summary>
+        /// Returns the cached instance for this view type, loading it from Addressables
+        /// on first use (see ViewAddressPrefix for the addressing convention). Concurrent
+        /// calls for the same type share a single load rather than instantiating twice.
+        /// </summary>
+        public async UniTask<T> GetOrLoadViewAsync<T>() where T : UIViewBase
+        {
+            if (_views.TryGetValue(typeof(T), out var existing))
+                return (T)existing;
+
+            if (!_pendingLoads.TryGetValue(typeof(T), out var pending))
+            {
+                pending = LoadViewAsync<T>().Preserve();
+                _pendingLoads[typeof(T)] = pending;
+            }
+
+            return (T)await pending;
+        }
+
+        private async UniTask<UIViewBase> LoadViewAsync<T>() where T : UIViewBase
+        {
+            var prefab = await Addressables.LoadAssetAsync<GameObject>(ViewAddressPrefix + typeof(T).Name);
+            var view = Instantiate(prefab, _root).GetComponent<T>();
             _views[typeof(T)] = view;
             return view;
         }
@@ -55,6 +94,22 @@ namespace magus.ui
         }
 
         /// <summary>
+        /// Opens a view by type alone: cached instance if one exists, otherwise loads
+        /// it from Addressables (see ViewAddressPrefix) and caches it. Does not touch
+        /// back-navigation history - use PushView&lt;T&gt;() for that.
+        /// </summary>
+        public void OpenView<T>() where T : UIViewBase
+        {
+            OpenViewAsync<T>().Forget();
+        }
+
+        private async UniTaskVoid OpenViewAsync<T>() where T : UIViewBase
+        {
+            var view = await GetOrLoadViewAsync<T>();
+            view.Open();
+        }
+
+        /// <summary>
         /// Pushes a view onto the navigation stack: opens it now, remembers what was
         /// active before it so PopView() can return to it. Use for back-navigable
         /// screens (Title -> Options -> back). If you don't already have a view
@@ -63,6 +118,22 @@ namespace magus.ui
         public void PushView(IUIView view)
         {
             _stateManager.Push(new ViewState(view, PopView));
+        }
+
+        /// <summary>
+        /// Same as PushView(IUIView), but resolves the view by type alone: cached
+        /// instance if one exists, otherwise loads it from Addressables (see
+        /// ViewAddressPrefix) and caches it.
+        /// </summary>
+        public void PushView<T>() where T : UIViewBase
+        {
+            PushViewAsync<T>().Forget();
+        }
+
+        private async UniTaskVoid PushViewAsync<T>() where T : UIViewBase
+        {
+            var view = await GetOrLoadViewAsync<T>();
+            PushView(view);
         }
 
         /// <summary>Returns to the state that was active before the last PushView()/PushState().</summary>

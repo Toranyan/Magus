@@ -12,7 +12,8 @@ namespace magus
 	{
 		private void Awake()
 		{
-			UIManager.Instance.PushState(new TitleUIState());
+			//UIManager.Instance.PushState(new TitleUIState());
+			UIManager.Instance.PushView<UITitle>();
 		}
 	}
 }

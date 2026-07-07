@@ -207,10 +207,57 @@ public class UIManager : SingletonComponent<UIManager>
     public void PushView(IUIView view) { ... }   // opens + remembers history
     public void PopView() { ... }
     public void PushState(IUIState state) { ... }
+
+    // type-driven, Addressables-backed - no prefab reference required at the call site
+    public async UniTask<T> GetOrLoadViewAsync<T>() where T : UIViewBase { ... }
+    public void OpenView<T>() where T : UIViewBase { ... }     // fire-and-forget, no history
+    public void PushView<T>() where T : UIViewBase { ... }     // fire-and-forget, with history
 }
 ```
 
 `Open<T>`/`Close<T>` (no history) and `PushView`/`PopView` (with history) are kept as separate, deliberately-named pairs rather than one API — they mean different things (a toggled HUD popup vs. a back-navigable screen), and collapsing them would hide that distinction rather than simplify it. What both share is that neither needs `UIStateManager` directly: `CastMenuPresenter.Init()` (`UIManager.Instance.GetOrCreateView(_viewPrefab)`) — still has zero callers, something needs to construct a `CastMenuPresenter` and drive `Open()`/`Close()` from player input before the cast menu is actually reachable in-game.
+
+### Type-driven views (`OpenView<T>()` / `PushView<T>()`)
+
+`GetOrCreateView<T>(T prefab)` and `PushView(IUIView view)` both require the caller to already hold a reference — either a scene-embedded instance (`_optionsWindow`) or a prefab wired via the Inspector (`CastMenuPresenter`'s constructor). Sometimes there's no reference to hand over at all — the caller just wants "the Title screen" by type. `OpenView<T>()`/`PushView<T>()` cover that case:
+
+```csharp
+public async UniTask<T> GetOrLoadViewAsync<T>() where T : UIViewBase
+{
+    if (_views.TryGetValue(typeof(T), out var existing))
+        return (T)existing;
+
+    if (!_pendingLoads.TryGetValue(typeof(T), out var pending))
+    {
+        pending = LoadViewAsync<T>().Preserve();   // .Preserve() lets multiple concurrent
+        _pendingLoads[typeof(T)] = pending;        // callers await the same in-flight load
+    }
+
+    return (T)await pending;
+}
+
+private async UniTask<UIViewBase> LoadViewAsync<T>() where T : UIViewBase
+{
+    var prefab = await Addressables.LoadAssetAsync<GameObject>(ViewAddressPrefix + typeof(T).Name);
+    var view = Instantiate(prefab, _root).GetComponent<T>();
+    _views[typeof(T)] = view;
+    return view;
+}
+
+public void PushView<T>() where T : UIViewBase => PushViewAsync<T>().Forget();
+private async UniTaskVoid PushViewAsync<T>() where T : UIViewBase
+{
+    PushView(await GetOrLoadViewAsync<T>());
+}
+```
+
+**Convention: address = path relative to `Assets/Magus/Addressables/`, no extension** — this is `AddressableAutoSetting`'s existing rule (`Assets/Magus/Addressables/Effects/Fire.prefab` → `"Effects/Fire"`), not a new one invented for views. View prefabs live under `Assets/Magus/Addressables/UI/Views/`, so `ViewAddressPrefix = "UI/Views/"` and a view type's address is `"UI/Views/" + typeof(T).Name` (e.g. `UITitle.prefab` at `Addressables/UI/Views/UITitle.prefab` → `"UI/Views/UITitle"`). No attribute or lookup table needed as long as every view prefab's filename matches its component's class name, which is already true for every view in the project.
+
+Follows the codebase's existing async convention exactly (`ObjectPoolManager.GetPrefab` already does `await Addressables.LoadAssetAsync<GameObject>(id)`; `MeleeAttackComponent`/`ProjectileAttackComponent` already expose a synchronous-looking method that calls a private `XxxAsync()` and `.Forget()`s it) — nothing new introduced, just applied to views.
+
+**`UITitle.prefab` migrated** — moved from `Assets/Magus/UI/Title/UITitle.prefab` to `Assets/Magus/Addressables/UI/Views/UITitle.prefab` (file move, GUID preserved, so the existing prefab-instance link in `Title.unity` isn't affected; originally landed at `Addressables/UI/UITitle.prefab` and was moved one level deeper into a `Views/` subfolder). `AddressableAutoSetting`'s `AssetPostprocessor` should pick up the move automatically and assign it address `"UI/Views/UITitle"` the next time the Editor's asset database refreshes; if it doesn't fire on its own, run **Magus > Addressables > Apply Auto Addressing** manually. Nothing calls `PushView<UITitle>()`/`OpenView<UITitle>()` yet — this just makes it possible.
+
+**Not yet migrated:** `OptionsWindow` and `CastMenu` are still referenced as direct instances (`_optionsWindow`, `CastMenuPresenter`'s constructor param) rather than through the type-driven path. `_optionsWindow` in particular is a pre-placed scene instance, not an Addressable prefab — moving it over would mean changing OptionsWindow from "always in the scene, hidden" to "instantiated on demand," a real behavior change, not just a refactor, and hasn't been decided. (Note: `Assets/Magus/Addressables/UI/CastMenu.prefab` already exists as a separate copy with its own GUID, distinct from `Assets/Magus/UI/CastMenu/CastMenu.prefab` — not touched here, flagging in case it wasn't intentional.)
 
 ---
 
