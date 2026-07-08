@@ -1,19 +1,18 @@
 using UnityEngine;
-using magus.ui;
+using magus.game;
 
 namespace magus
 {
 	/// <summary>
-	/// Entry point for the title/main scene. Owns scene-level bootstrapping concerns
-	/// that don't belong to any single screen - e.g. seeding the UI navigation stack
-	/// with its root state before any screen reacts to input.
+	/// Entry point for the (single, persistent) main scene. Owns scene-level
+	/// bootstrapping concerns that don't belong to any single screen - e.g. kicking
+	/// off the top-level GameFSM in its starting state before any screen reacts to input.
 	/// </summary>
 	public class MainBootstrapper : MonoBehaviour
 	{
 		private void Awake()
 		{
-			//UIManager.Instance.PushState(new TitleUIState());
-			UIManager.Instance.PushView<UITitle>();
+			GameManager.Instance.ChangeState(GameState.MainMenu);
 		}
 	}
 }

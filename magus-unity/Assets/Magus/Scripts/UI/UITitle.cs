@@ -4,8 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 using tora.ui;
-using magus.singleton;
-using magus.system;
+using magus.game;
 
 
 
@@ -38,8 +37,8 @@ namespace magus.ui {
 
 		private void OnClickPlayButton() {
 
-			//tell controller to transition
-			SceneController.Instance.ChangeScene(Scene.Battle);
+			//tell the game FSM to transition
+			GameManager.Instance.ChangeState(GameState.Battle);
 		}
 
 		private void OnClickOptionsButton() {

@@ -27,6 +27,9 @@ namespace magus.debug
 			var unitSpell2 = new UnitSpellInstance(new SpellInfo(spellMaster2), playerController.Unit);
 			playerController.SetSpell(0, unitSpell1);
 			playerController.SetSpell(1, unitSpell2);
+
+			BattleController.Instance.Init();
+
 		}
 	}
 }
