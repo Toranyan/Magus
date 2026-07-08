@@ -61,6 +61,15 @@ namespace magus.battle
             obj.transform.SetParent(_poolContainer);
         }
 
+        /// <summary>Frees every currently allocated object back to the pool.</summary>
+        public void FreeAll()
+        {
+            foreach (var obj in new List<T>(_allocatedObjects))
+            {
+                Free(obj);
+            }
+        }
+
         private void ExpandPool()
         {
             for (int i = 0; i < _expansionBatchSize; i++)

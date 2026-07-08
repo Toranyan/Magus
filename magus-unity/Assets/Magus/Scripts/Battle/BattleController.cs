@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using tora.singleton;
 using magus.chara;
 using Cysharp.Threading.Tasks;
@@ -32,38 +33,95 @@ namespace magus.battle
 		[SerializeField]
 		private FollowCamera _followCamera;
 
+		[SerializeField]
+		private GameObject _battle3DRoot;
+
 		public PlayerController PlayerController => _playerController;
 
 		public ProjectileManager ProjectileManager => _projectileManager;
 
 		public EffectManager EffectManager => _effectManager;
 
-		public void Init()
+		/// <summary>Full battle setup: loads the map and player from the given
+		/// addressable paths (or generates a random map, TODO, if MapAddress is empty),
+		/// then runs the same required setup as InitRequired(). Use this for real
+		/// gameplay.</summary>
+		public void Init(BattleInitOptions options)
 		{
-			InitAsync().Forget();
-			
+			InitAsync(options).Forget();
 		}
 
-		private async UniTask InitAsync()
+		private async UniTask InitAsync(BattleInitOptions options)
 		{
+			await LoadMapAsync(options.MapAddress);
+			await LoadPlayerAsync(options.PlayerPrefabAddress);
+			await InitRequiredAsync();
+		}
 
+		/// <summary>Setup every battle needs regardless of how the map/player got into
+		/// the scene: master data, player setup, camera follow target. Called by Init()
+		/// after it spawns the map/player; called directly by DebugBattleBootstrapper,
+		/// whose dev scenes already have both placed by hand.</summary>
+		public void InitRequired()
+		{
+			InitRequiredAsync().Forget();
+		}
+
+		private async UniTask InitRequiredAsync()
+		{
 			await MasterData.LoadDataAsync();
 
-			_projectileManager.Init(new[] {
-				"Prefabs/Projectiles/BlackHole",
-				"Prefabs/Projectiles/Fireball",
-			}).Forget();
-			_effectManager.Init(new[] {
-				"Prefabs/Effects/BallExplosion",
-				"Prefabs/Effects/Explosion_01",
-			}).Forget();
-
 			_playerController.Initialize();
-
+			_playerController.Unit.Killed += OnPlayerKilled;
 
 			_followCamera.FollowTarget = _playerController.gameObject;
 			_followCamera.LookTarget = _playerController.gameObject;
+		}
 
+		/// <summary>Clears all dynamic battle content - active projectiles, effects,
+		/// and spawned enemies - back to a clean map. Does not touch the player.</summary>
+		public void Reset()
+		{
+			_projectileManager.ClearAll();
+			_effectManager.ClearAll();
+
+			foreach (var spawner in _battle3DRoot.GetComponentsInChildren<ObjectSpawner>())
+			{
+				spawner.ResetSpawner();
+			}
+		}
+
+		private void OnPlayerKilled()
+		{
+			Reset();
+
+			// TODO: show game over UI
+			// TODO: return to main menu (GameManager.Instance.ChangeState(GameState.MainMenu))
+		}
+
+		private async UniTask LoadMapAsync(string mapAddress)
+		{
+			if (string.IsNullOrEmpty(mapAddress))
+			{
+				GenerateRandomMap();
+				return;
+			}
+
+			var mapPrefab = await Addressables.LoadAssetAsync<GameObject>(mapAddress);
+			Instantiate(mapPrefab, _battle3DRoot.transform);
+		}
+
+		private void GenerateRandomMap()
+		{
+			// TODO: procedural map generation
+			Debug.LogWarning("[BattleController] Random map generation is not implemented yet.");
+		}
+
+		private async UniTask LoadPlayerAsync(string playerPrefabAddress)
+		{
+			var playerPrefab = await Addressables.LoadAssetAsync<GameObject>(playerPrefabAddress);
+			var playerInstance = Instantiate(playerPrefab, _battle3DRoot.transform);
+			_playerController = playerInstance.GetComponent<PlayerController>();
 		}
 	}
 

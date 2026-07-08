@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -8,31 +9,41 @@ namespace magus.battle
 
     public class ObjectPoolManager : MonoBehaviour
     {
-        private Dictionary<string, ObjectPooler<PoolableHandler>> _poolDict = new();
+        private readonly Dictionary<string, ObjectPooler<PoolableHandler>> _poolDict = new();
+        private readonly Dictionary<string, UniTask<ObjectPooler<PoolableHandler>>> _pendingPools = new();
 
-		public async UniTask Init(string[] ids)
+		/// <summary>Warms the pools for these ids ahead of time. Optional - Allocate()
+		/// creates a pool on demand if one doesn't exist yet.</summary>
+		public async UniTask Preload(string[] ids)
 		{
 			await UniTask.WhenAll(
-				ids.Select(id => CreatePool(id))
+				ids.Select(id => GetOrCreatePool(id))
 			);
 		}
 
 		public async UniTask<PoolableHandler> Allocate(string id)
 		{
-			PoolableHandler obj;
-			if (_poolDict.TryGetValue(id, out var pool))
-			{
-				obj = pool.Allocate();
-				//obj.SetOwner(owner);
-				return obj;
-			} else
-			{
-				var newPool = await CreatePool(id);
-				obj = newPool.Allocate();
+			var pool = await GetOrCreatePool(id);
+			return pool.Allocate();
+		}
 
-				//proj.SetOwner(owner);
+		/// <summary>
+		/// Returns the cached pool for this id, creating it on first request. Concurrent
+		/// requests for the same id (e.g. Preload racing a Create call) share a single
+		/// creation rather than creating the pool twice.
+		/// </summary>
+		private UniTask<ObjectPooler<PoolableHandler>> GetOrCreatePool(string id)
+		{
+			if (_poolDict.TryGetValue(id, out var pool))
+				return UniTask.FromResult(pool);
+
+			if (!_pendingPools.TryGetValue(id, out var pending))
+			{
+				pending = CreatePool(id).Preserve();
+				_pendingPools[id] = pending;
 			}
-			return obj;
+
+			return pending;
 		}
 
 		public void Dealloc(PoolableHandler obj)

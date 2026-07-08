@@ -28,7 +28,16 @@ namespace magus.debug
 			playerController.SetSpell(0, unitSpell1);
 			playerController.SetSpell(1, unitSpell2);
 
-			BattleController.Instance.Init();
+			BattleController.Instance.InitRequired();
+
+			BattleController.Instance.ProjectileManager.Preload(new[] {
+				"Prefabs/Projectiles/BlackHole",
+				"Prefabs/Projectiles/Fireball",
+			}).Forget();
+			BattleController.Instance.EffectManager.Preload(new[] {
+				"Prefabs/Effects/BallExplosion",
+				"Prefabs/Effects/Explosion_01",
+			}).Forget();
 
 		}
 	}

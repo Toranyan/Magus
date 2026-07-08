@@ -10,7 +10,12 @@ namespace magus.game
 	{
 		public override void OnEnter(IState prevState)
 		{
-			BattleController.Instance.Init();
+			// TODO: source these from map/character selection once that UI exists
+			BattleController.Instance.Init(new BattleInitOptions
+			{
+				MapAddress = "Prefabs/Maps/map_test_01",
+				PlayerPrefabAddress = "Prefabs/Units/pc_test_01",
+			});
 		}
 	}
 }
