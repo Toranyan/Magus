@@ -26,6 +26,9 @@ namespace magus.chara
 		[SerializeField]
 		private float _terminalVelocity = -50;
 
+		[SerializeField]
+		private bool _ragdollOnDeath = true;
+
 		[Tooltip("Useful for rough ground")]
 		public float _groundedOffset = -0.14f;
 
@@ -91,7 +94,11 @@ namespace magus.chara
 			var realMoveVec = ((MoveSpeed * _moveVector) + new Vector3(0, _verticalVelocity, 0)) * deltaTime;
 
 			//apply effects
-			_characterController.Move(realMoveVec);
+			if (_characterController.enabled)
+			{
+				_characterController.Move(realMoveVec);
+			}
+				
 		}
 
 		public void UpdateRotation(float deltaTime)
@@ -135,9 +142,12 @@ namespace magus.chara
 
 		public void StartDeathAnimation()
 		{
-
 			//DeathAnimation().Forget();
-			Ragdoll().Forget();
+
+			if (_ragdollOnDeath)
+			{
+				Ragdoll().Forget();
+			}
 		}
 
 		public async UniTask Ragdoll()
