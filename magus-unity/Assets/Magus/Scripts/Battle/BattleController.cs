@@ -31,6 +31,9 @@ namespace magus.battle
 		private EffectManager _effectManager;
 
 		[SerializeField]
+		private PickupSpawner _pickupSpawner;
+
+		[SerializeField]
 		private FollowCamera _followCamera;
 
 		[SerializeField]
@@ -41,6 +44,8 @@ namespace magus.battle
 		public ProjectileManager ProjectileManager => _projectileManager;
 
 		public EffectManager EffectManager => _effectManager;
+
+		public PickupSpawner PickupSpawner => _pickupSpawner;
 
 		/// <summary>Full battle setup: loads the map and player from the given
 		/// addressable paths (or generates a random map, TODO, if MapAddress is empty),
@@ -79,11 +84,12 @@ namespace magus.battle
 		}
 
 		/// <summary>Clears all dynamic battle content - active projectiles, effects,
-		/// and spawned enemies - back to a clean map. Does not touch the player.</summary>
+		/// pickups, and spawned enemies - back to a clean map. Does not touch the player.</summary>
 		public void Reset()
 		{
 			_projectileManager.ClearAll();
 			_effectManager.ClearAll();
+			_pickupSpawner.ClearAll();
 
 			foreach (var spawner in _battle3DRoot.GetComponentsInChildren<ObjectSpawner>())
 			{

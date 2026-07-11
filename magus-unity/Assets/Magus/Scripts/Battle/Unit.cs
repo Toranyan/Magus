@@ -30,6 +30,10 @@ namespace magus.battle
 
         public Transform ProjectileOrigin => _projectileOrigin;
 
+        /// <summary>Source of the most recent hit received. Used by LootDropper to
+        /// populate LootContext.Killer since Killed itself carries no payload.</summary>
+        public IBattleEntity LastDamageSource { get; private set; }
+
         public event Action Killed;
         public event Action<DamageInfo> DamageReceived;
         public event Action<float> ManaChanged;
@@ -67,6 +71,7 @@ namespace magus.battle
         {
             if (!IsAlive) return;
             CurrentHp = Mathf.Max(0f, CurrentHp - info.Amount);
+            LastDamageSource = info.Source;
             DamageReceived?.Invoke(info);
             if (!IsAlive)
             {
