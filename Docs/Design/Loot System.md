@@ -264,12 +264,15 @@ PickupSpawnRequest
 PickupData Pickup
 
 int Quantity
+
+Vector3 Position
 ```
+
+`LootDropper` fills in `Position` from the `LootContext.Victim`'s location before handing the request to the `PickupSpawner`. This is the single canonical definition of `PickupSpawnRequest`, shared with the Pickup System doc.
 
 The PickupSpawner determines:
 
-* Spawn position
-* Spawn spread
+* Spawn spread around the given position
 * Spawn animation
 * Object pooling
 * Magnet behavior
