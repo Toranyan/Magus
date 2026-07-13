@@ -34,9 +34,6 @@ namespace magus.battle
         [SerializeField] private PickupEffect _effect;
 
         [SerializeField]
-        private PickupData _data;
-
-        [SerializeField]
         private PoolableHandler _handle;
 
         [SerializeField]
