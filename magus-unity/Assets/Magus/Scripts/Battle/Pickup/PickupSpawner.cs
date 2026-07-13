@@ -64,10 +64,10 @@ namespace magus.battle
             }
 
             for (int i = 0; i < request.Quantity; i++)
-                await SpawnOne(prefabId, request.Effect, request.Position);
+                await SpawnOne(prefabId, request.Effect, request.Position, request.CollectorTeamId);
         }
 
-        private async UniTask SpawnOne(string prefabId, PickupEffect effect, Vector3 position)
+        private async UniTask SpawnOne(string prefabId, PickupEffect effect, Vector3 position, int collectorTeamId)
         {
             var handle = await _poolManager.Allocate(prefabId);
             var pickup = handle.GetComponent<Pickup>();
@@ -83,6 +83,7 @@ namespace magus.battle
             pickup.EffectRequested += OnPickupEffectRequested;
 
             pickup.SetEffect(effect);
+            pickup.SetCollectorTeamId(collectorTeamId);
             handle.transform.position = position + RandomSpread();
             handle.gameObject.SetActive(true); // triggers Pickup.OnEnable, which resets its runtime state
 

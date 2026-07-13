@@ -13,5 +13,6 @@ namespace magus.battle
         public PickupEffect Effect;
         public int Quantity;
         public Vector3 Position;
+        public int CollectorTeamId;
     }
 }

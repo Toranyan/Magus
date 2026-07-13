@@ -33,6 +33,9 @@ namespace magus.battle
 
         [SerializeField] private PickupEffect _effect;
 
+        [Tooltip("TeamId allowed to collect this pickup. Defaults to 0, the player team.")]
+        [SerializeField] private int _collectorTeamId = 0;
+
         [SerializeField]
         private PoolableHandler _handle;
 
@@ -83,6 +86,13 @@ namespace magus.battle
             _effect = effect;
         }
 
+        /// <summary>Overrides which TeamId may collect this instance, same override
+        /// pattern as SetEffect - a hand-placed instance keeps its own default.</summary>
+        public void SetCollectorTeamId(int teamId)
+        {
+            _collectorTeamId = teamId;
+        }
+
         private void Update()
         {
             _aliveTime += Time.deltaTime;
@@ -99,7 +109,7 @@ namespace magus.battle
             if (!_collectible) return;
 
             var unit = other.GetComponent<Unit>();
-            if (unit == null || !unit.IsAlive) return;
+            if (unit == null || !unit.IsAlive || unit.TeamId != _collectorTeamId) return;
 
             Collect(unit);
         }

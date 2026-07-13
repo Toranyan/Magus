@@ -12,6 +12,9 @@ namespace magus.battle
         [SerializeField] private Unit _unit;
         [SerializeField] private LootTable _lootTable;
 
+        [Tooltip("TeamId allowed to collect the pickups this dropper produces. Defaults to 0, the player team, so enemies don't pick up their own drops.")]
+        [SerializeField] private int _collectorTeamId = 0;
+
         private readonly List<PickupSpawnRequest> _requests = new();
 
         private void Awake()
@@ -28,6 +31,7 @@ namespace magus.battle
             {
                 Killer = _unit.LastDamageSource,
                 Victim = _unit,
+                CollectorTeamId = _collectorTeamId,
             };
 
             _requests.Clear();

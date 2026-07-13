@@ -13,6 +13,10 @@ namespace magus.battle
 
         public Unit Victim;
 
+        /// <summary>TeamId allowed to collect the pickups this roll produces, from
+        /// LootDropper's own serialized default. 0 (player team) unless overridden.</summary>
+        public int CollectorTeamId;
+
         public float Luck = 1f;
         public float Difficulty = 1f;
         public int Wave;

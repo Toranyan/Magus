@@ -251,8 +251,8 @@ A Pickup may support additional gameplay rules.
 Examples include:
 
 * Collection delay after spawning
+* Team restrictions - **implemented**: Pickup has a `CollectorTeamId` (default 0, the player team) checked against the colliding Unit's TeamId before collection is allowed. LootDropper carries its own serialized `CollectorTeamId` default and overrides the spawned Pickup's value per drop, so a dropper can be configured to let a different team (e.g. other enemies) collect what it drops.
 * Owner-only collection period
-* Team restrictions
 * Distance requirements
 * Auto-collection
 * Manual interaction

@@ -58,6 +58,7 @@ namespace magus.battle
                 Effect = effect,
                 Quantity = quantity,
                 Position = context.Victim != null ? context.Victim.transform.position : Vector3.zero,
+                CollectorTeamId = context.CollectorTeamId,
             });
         }
 
