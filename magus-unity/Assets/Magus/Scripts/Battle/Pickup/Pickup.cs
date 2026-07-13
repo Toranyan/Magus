@@ -74,6 +74,15 @@ namespace magus.battle
             EffectRequested = null;
         }
 
+        /// <summary>Overrides this instance's effect for one spawn. Called by
+        /// PickupSpawner so a single prefab (e.g. "XP Orb") can grant a different
+        /// amount per LootEntry. A hand-placed instance that's never spawned this
+        /// way keeps using its own inspector-set default.</summary>
+        public void SetEffect(PickupEffect effect)
+        {
+            _effect = effect;
+        }
+
         private void Update()
         {
             _aliveTime += Time.deltaTime;

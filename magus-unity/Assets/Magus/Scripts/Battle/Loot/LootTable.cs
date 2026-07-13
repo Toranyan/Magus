@@ -27,23 +27,23 @@ namespace magus.battle
             switch (entry.Kind)
             {
                 case LootEntryKind.Guaranteed:
-                    Resolve(entry.PickupPrefabId, entry.NestedTable, entry.Quantity, context, results);
+                    Resolve(entry.Effect, entry.NestedTable, entry.Quantity, context, results);
                     break;
 
                 case LootEntryKind.Chance:
                     if (Random.value <= entry.Chance)
-                        Resolve(entry.PickupPrefabId, entry.NestedTable, entry.Quantity, context, results);
+                        Resolve(entry.Effect, entry.NestedTable, entry.Quantity, context, results);
                     break;
 
                 case LootEntryKind.WeightedPool:
                     var picked = PickWeighted(entry.WeightedOptions);
                     if (picked != null)
-                        Resolve(picked.PickupPrefabId, picked.NestedTable, picked.Quantity, context, results);
+                        Resolve(picked.Effect, picked.NestedTable, picked.Quantity, context, results);
                     break;
             }
         }
 
-        private static void Resolve(string pickupPrefabId, LootTable nestedTable, int quantity, LootContext context, List<PickupSpawnRequest> results)
+        private static void Resolve(PickupEffect effect, LootTable nestedTable, int quantity, LootContext context, List<PickupSpawnRequest> results)
         {
             if (nestedTable != null)
             {
@@ -51,11 +51,11 @@ namespace magus.battle
                 return;
             }
 
-            if (string.IsNullOrEmpty(pickupPrefabId) || quantity <= 0) return;
+            if (effect == null || quantity <= 0) return;
 
             results.Add(new PickupSpawnRequest
             {
-                PickupPrefabId = pickupPrefabId,
+                Effect = effect,
                 Quantity = quantity,
                 Position = context.Victim != null ? context.Victim.transform.position : Vector3.zero,
             });

@@ -10,6 +10,12 @@ namespace magus.battle
         RestoreMana,
         GrantExperience,
         AddCurrency,
+
+        /// <summary>Stubbed until an item/inventory system exists. Unlike the other
+        /// kinds, this won't resolve its prefab from PickupSpawner's Kind table -
+        /// an item pickup's visual depends on the item's own type, not on it being
+        /// a "GrantItem" effect.</summary>
+        GrantItem,
     }
 
     /// <summary>
@@ -43,6 +49,10 @@ namespace magus.battle
 
                 case PickupEffectKind.AddCurrency:
                     collector.GetComponentInParent<PlayerProgression>()?.AddCurrency((int)Amount);
+                    break;
+
+                case PickupEffectKind.GrantItem:
+                    // TODO: no item/inventory system yet - wire this up once one exists.
                     break;
             }
         }

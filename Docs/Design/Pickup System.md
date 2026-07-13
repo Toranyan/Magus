@@ -73,12 +73,13 @@ Responsible for creating pickups in the world.
 ### Responsibilities
 
 * Receive PickupSpawnRequests
+* Resolve which prefab represents the request's Effect.Kind
 * Choose spawn position
 * Apply spawn spread
 * Retrieve objects from pool
-* Initialize Pickup component
+* Override the pooled Pickup's effect with the request's Effect (Kind + Amount)
 
-The PickupSpawner does not determine rewards.
+The PickupSpawner does not determine rewards - only which prefab visually represents a given PickupEffectKind.
 
 ---
 
@@ -114,7 +115,7 @@ There is no separate PickupData asset. A Pickup prefab is only ever used by one 
 * Collection VFX
 * Spawn SFX
 * Collection SFX
-* Pickup Effect
+* Pickup Effect (an inspector-set default, used as-is by hand-placed instances - PickupSpawner overrides it per spawn with the triggering LootEntry's own Effect, so one "XP Orb" prefab serves every amount)
 
 Editing the prefab updates every future spawn and every already-placed instance, the same rebalance-without-code property a shared data asset would have given.
 
@@ -124,14 +125,15 @@ Editing the prefab updates every future spawn and every already-placed instance,
 
 Defines what happens when the pickup is collected.
 
-A plain serialized `Kind` + `Amount` pair (not a ScriptableObject or class hierarchy) - every current effect is "apply this amount to something," so no per-effect asset is needed:
+A plain serialized `Kind` + `Amount` pair (not a ScriptableObject or class hierarchy) - every current effect is "apply this amount to something," so no per-effect asset is needed. Referenced inline both by a Pickup prefab's own default and by each LootEntry that drops it:
 
 * Restore Health
 * Restore Mana
 * Grant Experience
 * Add Currency
+* Grant Item - stubbed (no-op) until an item/inventory system exists. Unlike the other kinds, PickupSpawner's Kind-to-prefab table won't cover this one: an item's visual comes from the item's own type, not from it being "a GrantItem effect."
 
-Future kinds (Unlock Ability, Give Buff, Grant Key Item, Trigger Event, ...) that need more than a single amount can extend the Kind enum when they're actually built, rather than generalizing the shape upfront.
+Future kinds that need more than a single amount can extend the Kind enum when they're actually built, rather than generalizing the shape upfront.
 
 A Pickup simply executes its assigned PickupEffect.
 
@@ -208,7 +210,7 @@ The Pickup System receives requests from external systems.
 ```text
 PickupSpawnRequest
 
-string PickupPrefabId
+PickupEffect Effect
 
 int Quantity
 

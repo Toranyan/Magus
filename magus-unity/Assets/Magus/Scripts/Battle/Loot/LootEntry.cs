@@ -11,17 +11,19 @@ namespace magus.battle
     }
 
     /// <summary>
-    /// A single row in a LootTable. Guaranteed/Chance entries resolve to either Pickup
+    /// A single row in a LootTable. Guaranteed/Chance entries resolve to either Effect
     /// or NestedTable (whichever is assigned); WeightedPool instead picks exactly one
-    /// of WeightedOptions.
+    /// of WeightedOptions. The amount lives here, on the entry, not on a prefab or
+    /// asset - PickupSpawner picks the prefab from Effect.Kind, so the same "XP Orb"
+    /// prefab is reused for every amount variation.
     /// </summary>
     [Serializable]
     public class LootEntry
     {
         public LootEntryKind Kind = LootEntryKind.Guaranteed;
 
-        [Tooltip("Addressable id of a Pickup prefab. Used when Kind is Guaranteed or Chance. Set either PickupPrefabId or NestedTable, not both.")]
-        public string PickupPrefabId;
+        [Tooltip("Used when Kind is Guaranteed or Chance. Set either Effect or NestedTable, not both.")]
+        public PickupEffect Effect;
         public LootTable NestedTable;
         public int Quantity = 1;
 
@@ -37,7 +39,7 @@ namespace magus.battle
     [Serializable]
     public class WeightedLootOption
     {
-        public string PickupPrefabId;
+        public PickupEffect Effect;
         public LootTable NestedTable;
         public int Quantity = 1;
         public float Weight = 1f;
