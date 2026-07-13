@@ -10,8 +10,10 @@ namespace magus.chara
     {
         [SerializeField] private Unit _unit;
         [SerializeField] private GameCharaController _charaController;
+        [SerializeField] private PlayerProgression _progression;
 
         public Unit Unit => _unit;
+        public PlayerProgression Progression => _progression;
 
 		private UnitSpellInstance[] _preparedSpells = new UnitSpellInstance[3];
         private Unit _targetEnemy;

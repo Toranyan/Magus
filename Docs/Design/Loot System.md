@@ -111,8 +111,10 @@ Represents a single entry inside a LootTable.
 
 A LootEntry may reference either:
 
-* PickupData
+* A PickupEffect (Kind + Amount, inline - not an asset)
 * Another LootTable
+
+The amount lives on the entry itself, not on a prefab or asset. PickupSpawner picks which prefab to spawn from the effect's Kind, so the same prefab (e.g. "XP Orb") is reused for every amount - a Slime's small XP drop and a Boss's large one are two LootEntries with different Amounts, not two prefabs.
 
 This enables hierarchical loot generation.
 
@@ -261,15 +263,19 @@ Loot generation produces spawn requests instead of GameObjects.
 ```
 PickupSpawnRequest
 
-PickupData Pickup
+PickupEffect Effect
 
 int Quantity
+
+Vector3 Position
 ```
+
+`Effect` (Kind + Amount) is inline data, not an asset reference - the amount is decided per LootEntry, not baked into a prefab. `LootTable.Roll` fills in `Position` from the `LootContext.Victim`'s location before the request is handed to the `PickupSpawner`. This is the single canonical definition of `PickupSpawnRequest`, shared with the Pickup System doc.
 
 The PickupSpawner determines:
 
-* Spawn position
-* Spawn spread
+* Which prefab represents Effect.Kind
+* Spawn spread around the given position
 * Spawn animation
 * Object pooling
 * Magnet behavior

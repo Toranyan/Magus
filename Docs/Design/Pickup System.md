@@ -73,12 +73,13 @@ Responsible for creating pickups in the world.
 ### Responsibilities
 
 * Receive PickupSpawnRequests
+* Resolve which prefab represents the request's Effect.Kind
 * Choose spawn position
 * Apply spawn spread
 * Retrieve objects from pool
-* Initialize Pickup component
+* Override the pooled Pickup's effect with the request's Effect (Kind + Amount)
 
-The PickupSpawner does not determine rewards.
+The PickupSpawner does not determine rewards - only which prefab visually represents a given PickupEffectKind.
 
 ---
 
@@ -86,11 +87,11 @@ The PickupSpawner does not determine rewards.
 
 Represents a collectible object in the world.
 
-Each Pickup references a PickupData asset describing its behavior.
+All configuration lives directly on the Pickup component itself - there is no separate data asset. This lets a prefab be tuned and hand-placed directly in a scene, not only spawned through the PickupSpawner.
 
 ### Responsibilities
 
-* Store PickupData
+* Store its own configuration
 * Handle spawn animation
 * Detect player collection
 * Trigger pickup effects
@@ -99,17 +100,13 @@ Each Pickup references a PickupData asset describing its behavior.
 
 ---
 
-## PickupData
+## Pickup Configuration
 
-ScriptableObject describing a pickup.
-
-Contains all static data required by a Pickup instance.
-
-Example properties:
+There is no separate PickupData asset. A Pickup prefab is only ever used by one Pickup type, so the prefab itself is already the shared, rebalance-in-one-place asset - a second asset paired 1:1 with it would just be indirection with a matching-pair footgun. Its fields live directly on the Pickup component:
 
 * Display Name
 * Icon
-* World Prefab
+* World Prefab (the Pickup prefab itself, referenced by addressable id)
 * Pickup Radius
 * Magnet Radius
 * Lifetime
@@ -118,9 +115,9 @@ Example properties:
 * Collection VFX
 * Spawn SFX
 * Collection SFX
-* Pickup Effect
+* Pickup Effect (an inspector-set default, used as-is by hand-placed instances - PickupSpawner overrides it per spawn with the triggering LootEntry's own Effect, so one "XP Orb" prefab serves every amount)
 
-Because PickupData is shared, designers can rebalance pickups without changing code.
+Editing the prefab updates every future spawn and every already-placed instance, the same rebalance-without-code property a shared data asset would have given.
 
 ---
 
@@ -128,18 +125,15 @@ Because PickupData is shared, designers can rebalance pickups without changing c
 
 Defines what happens when the pickup is collected.
 
-Examples:
+A plain serialized `Kind` + `Amount` pair (not a ScriptableObject or class hierarchy) - every current effect is "apply this amount to something," so no per-effect asset is needed. Referenced inline both by a Pickup prefab's own default and by each LootEntry that drops it:
 
-* Grant Experience
 * Restore Health
 * Restore Mana
+* Grant Experience
 * Add Currency
-* Unlock Ability
-* Give Buff
-* Grant Key Item
-* Trigger Event
+* Grant Item - stubbed (no-op) until an item/inventory system exists. Unlike the other kinds, PickupSpawner's Kind-to-prefab table won't cover this one: an item's visual comes from the item's own type, not from it being "a GrantItem effect."
 
-Effects should remain independent from the Pickup itself.
+Future kinds that need more than a single amount can extend the Kind enum when they're actually built, rather than generalizing the shape upfront.
 
 A Pickup simply executes its assigned PickupEffect.
 
@@ -153,7 +147,7 @@ The PickupSpawner receives a PickupSpawnRequest.
 
 A Pickup object is taken from the object pool.
 
-The Pickup is initialized using its PickupData.
+Its configuration already lives on its own fields; activating it (OnEnable) resets its runtime state (timers, collectible flag). A hand-placed instance gets the same reset for free when the scene loads, with no spawner involved.
 
 Optional spawn animation begins.
 
@@ -175,7 +169,7 @@ Gameplay systems may also interact with the Pickup during this phase.
 
 Examples:
 
-* Magnet attraction
+* Magnet attraction - **implemented**: once collectible, a Pickup finds the nearest eligible collector (matching CollectorTeamId) within MagnetRadius via an OverlapSphere check each frame and moves toward it at a constant MagnetSpeed. Actual collection still happens through the existing collision/OnTriggerEnter path once it arrives - the magnet only moves the pickup, it doesn't collect early. MagnetRadius of 0 disables it.
 * Vacuum abilities
 * Conveyor belts
 * Wind effects
@@ -216,7 +210,7 @@ The Pickup System receives requests from external systems.
 ```text
 PickupSpawnRequest
 
-PickupData Pickup
+PickupEffect Effect
 
 int Quantity
 
@@ -257,14 +251,14 @@ A Pickup may support additional gameplay rules.
 Examples include:
 
 * Collection delay after spawning
+* Team restrictions - **implemented**: Pickup has a `CollectorTeamId` (default 0, the player team) checked against the colliding Unit's TeamId before collection is allowed. LootDropper carries its own serialized `CollectorTeamId` default and overrides the spawned Pickup's value per drop, so a dropper can be configured to let a different team (e.g. other enemies) collect what it drops.
 * Owner-only collection period
-* Team restrictions
 * Distance requirements
 * Auto-collection
 * Manual interaction
 * Quest requirements
 
-These rules should remain configurable through PickupData where possible.
+These rules should remain configurable through Pickup's own fields where possible.
 
 ---
 
