@@ -42,19 +42,19 @@ namespace magus.battle
 
         private async UniTask SpawnAsync(PickupSpawnRequest request)
         {
-            if (request.Pickup == null || request.Quantity <= 0) return;
+            if (string.IsNullOrEmpty(request.PickupPrefabId) || request.Quantity <= 0) return;
 
             for (int i = 0; i < request.Quantity; i++)
-                await SpawnOne(request.Pickup, request.Position);
+                await SpawnOne(request.PickupPrefabId, request.Position);
         }
 
-        private async UniTask SpawnOne(PickupData data, Vector3 position)
+        private async UniTask SpawnOne(string prefabId, Vector3 position)
         {
-            var handle = await _poolManager.Allocate(data.PrefabAddressableId);
+            var handle = await _poolManager.Allocate(prefabId);
             var pickup = handle.GetComponent<Pickup>();
             if (pickup == null)
             {
-                Debug.LogError($"[PickupSpawner] Prefab for '{data.PrefabAddressableId}' has no Pickup component.");
+                Debug.LogError($"[PickupSpawner] Prefab for '{prefabId}' has no Pickup component.");
                 return;
             }
 
@@ -64,9 +64,7 @@ namespace magus.battle
             pickup.EffectRequested += OnPickupEffectRequested;
 
             handle.transform.position = position + RandomSpread();
-            handle.gameObject.SetActive(true);
-
-            pickup.Initialize(data);
+            handle.gameObject.SetActive(true); // triggers Pickup.OnEnable, which resets its runtime state
 
             _activePickups.Add(pickup);
         }
