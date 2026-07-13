@@ -4,19 +4,35 @@ using UnityEngine;
 namespace magus.battle
 {
     /// <summary>
-    /// A collectible object in the world. Sits alongside a PoolableHandler on the
-    /// pickup prefab; PickupSpawner initializes it with PickupData after allocating
-    /// it from the pool. Owns the idle/collect/expire lifecycle only - it does not
-    /// decide what should drop (LootTable) or play effects directly (EffectManager,
-    /// reached indirectly via EffectRequested the same way ProjectileBase does it).
+    /// A collectible object in the world. All configuration lives directly on this
+    /// component so a prefab can be tuned and manually placed in a scene with no
+    /// external data asset. PickupSpawner allocates/positions instances spawned from
+    /// the Loot System; hand-placed instances get the same lifecycle for free since
+    /// OnEnable (not an external Initialize call) resets runtime state.
     /// </summary>
     [RequireComponent(typeof(SphereCollider))]
     public class Pickup : MonoBehaviour
     {
-        [SerializeField]
-        private SphereCollider _collectionTrigger;
+        [SerializeField] private string _displayName;
+        [SerializeField] private Sprite _icon;
+        [SerializeField] private SphereCollider _collectionTrigger;
 
-        private PickupData _data;
+        [SerializeField] private float _pickupRadius = 0.5f;
+        [SerializeField] private float _magnetRadius = 3f;
+
+        [Tooltip("Seconds before an uncollected pickup is returned to the pool. 0 = never expires.")]
+        [SerializeField] private float _lifetime = 20f;
+
+        [Tooltip("Seconds after spawn before the pickup can be collected.")]
+        [SerializeField] private float _collectionDelay = 0.25f;
+
+        [SerializeField] private string _spawnVfxId;
+        [SerializeField] private string _collectionVfxId;
+        [SerializeField] private string _spawnSfxId;
+        [SerializeField] private string _collectionSfxId;
+
+        [SerializeField] private PickupEffect _effect;
+
         private PoolableHandler _handle;
         private float _aliveTime;
         private bool _collectible;
@@ -32,6 +48,18 @@ namespace magus.battle
         private void Awake()
         {
             _handle = GetComponent<PoolableHandler>();
+
+            if (_collectionTrigger != null)
+                _collectionTrigger.radius = _pickupRadius;
+        }
+
+        private void OnEnable()
+        {
+            _aliveTime = 0f;
+            _collectible = _collectionDelay <= 0f;
+
+            RequestEffect(_spawnVfxId);
+            RequestEffect(_spawnSfxId);
         }
 
         public void ClearEvents()
@@ -41,35 +69,20 @@ namespace magus.battle
             EffectRequested = null;
         }
 
-        public void Initialize(PickupData data)
-        {
-            _data = data;
-            _aliveTime = 0f;
-            _collectible = data.CollectionDelay <= 0f;
-
-            if (_collectionTrigger != null)
-                _collectionTrigger.radius = data.PickupRadius;
-
-            RequestEffect(data.SpawnVfxId);
-            RequestEffect(data.SpawnSfxId);
-        }
-
         private void Update()
         {
-            if (_data == null) return;
-
             _aliveTime += Time.deltaTime;
 
-            if (!_collectible && _aliveTime >= _data.CollectionDelay)
+            if (!_collectible && _aliveTime >= _collectionDelay)
                 _collectible = true;
 
-            if (_data.Lifetime > 0f && _aliveTime >= _data.Lifetime)
+            if (_lifetime > 0f && _aliveTime >= _lifetime)
                 Expire();
         }
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!_collectible || _data == null) return;
+            if (!_collectible) return;
 
             var unit = other.GetComponent<Unit>();
             if (unit == null || !unit.IsAlive) return;
@@ -79,13 +92,13 @@ namespace magus.battle
 
         private void Collect(Unit collector)
         {
-            _data.Effect?.Apply(collector);
+            _effect?.Apply(collector);
 
-            RequestEffect(_data.CollectionVfxId);
-            RequestEffect(_data.CollectionSfxId);
+            RequestEffect(_collectionVfxId);
+            RequestEffect(_collectionSfxId);
 
             Collected?.Invoke(this);
-            _handle?.ReturnToPool();
+            ReturnOrDeactivate();
         }
 
         /// <summary>Returns this pickup to its pool without applying its effect.
@@ -94,7 +107,17 @@ namespace magus.battle
         public void Expire()
         {
             Expired?.Invoke(this);
-            _handle?.ReturnToPool();
+            ReturnOrDeactivate();
+        }
+
+        /// <summary>Pooled instances return to their pool; a hand-placed instance
+        /// that was never allocated through ObjectPoolManager just deactivates.</summary>
+        private void ReturnOrDeactivate()
+        {
+            if (_handle != null && _handle.Pool != null)
+                _handle.ReturnToPool();
+            else
+                gameObject.SetActive(false);
         }
 
         private void RequestEffect(string effectId)

@@ -20,8 +20,8 @@ namespace magus.battle
     {
         public LootEntryKind Kind = LootEntryKind.Guaranteed;
 
-        [Tooltip("Used when Kind is Guaranteed or Chance. Set either Pickup or NestedTable, not both.")]
-        public PickupData Pickup;
+        [Tooltip("Addressable id of a Pickup prefab. Used when Kind is Guaranteed or Chance. Set either PickupPrefabId or NestedTable, not both.")]
+        public string PickupPrefabId;
         public LootTable NestedTable;
         public int Quantity = 1;
 
@@ -37,7 +37,7 @@ namespace magus.battle
     [Serializable]
     public class WeightedLootOption
     {
-        public PickupData Pickup;
+        public string PickupPrefabId;
         public LootTable NestedTable;
         public int Quantity = 1;
         public float Weight = 1f;

@@ -86,11 +86,11 @@ The PickupSpawner does not determine rewards.
 
 Represents a collectible object in the world.
 
-Each Pickup references a PickupData asset describing its behavior.
+All configuration lives directly on the Pickup component itself - there is no separate data asset. This lets a prefab be tuned and hand-placed directly in a scene, not only spawned through the PickupSpawner.
 
 ### Responsibilities
 
-* Store PickupData
+* Store its own configuration
 * Handle spawn animation
 * Detect player collection
 * Trigger pickup effects
@@ -99,17 +99,13 @@ Each Pickup references a PickupData asset describing its behavior.
 
 ---
 
-## PickupData
+## Pickup Configuration
 
-ScriptableObject describing a pickup.
-
-Contains all static data required by a Pickup instance.
-
-Example properties:
+There is no separate PickupData asset. A Pickup prefab is only ever used by one Pickup type, so the prefab itself is already the shared, rebalance-in-one-place asset - a second asset paired 1:1 with it would just be indirection with a matching-pair footgun. Its fields live directly on the Pickup component:
 
 * Display Name
 * Icon
-* World Prefab
+* World Prefab (the Pickup prefab itself, referenced by addressable id)
 * Pickup Radius
 * Magnet Radius
 * Lifetime
@@ -120,7 +116,7 @@ Example properties:
 * Collection SFX
 * Pickup Effect
 
-Because PickupData is shared, designers can rebalance pickups without changing code.
+Editing the prefab updates every future spawn and every already-placed instance, the same rebalance-without-code property a shared data asset would have given.
 
 ---
 
@@ -128,18 +124,14 @@ Because PickupData is shared, designers can rebalance pickups without changing c
 
 Defines what happens when the pickup is collected.
 
-Examples:
+A plain serialized `Kind` + `Amount` pair (not a ScriptableObject or class hierarchy) - every current effect is "apply this amount to something," so no per-effect asset is needed:
 
-* Grant Experience
 * Restore Health
 * Restore Mana
+* Grant Experience
 * Add Currency
-* Unlock Ability
-* Give Buff
-* Grant Key Item
-* Trigger Event
 
-Effects should remain independent from the Pickup itself.
+Future kinds (Unlock Ability, Give Buff, Grant Key Item, Trigger Event, ...) that need more than a single amount can extend the Kind enum when they're actually built, rather than generalizing the shape upfront.
 
 A Pickup simply executes its assigned PickupEffect.
 
@@ -153,7 +145,7 @@ The PickupSpawner receives a PickupSpawnRequest.
 
 A Pickup object is taken from the object pool.
 
-The Pickup is initialized using its PickupData.
+Its configuration already lives on its own fields; activating it (OnEnable) resets its runtime state (timers, collectible flag). A hand-placed instance gets the same reset for free when the scene loads, with no spawner involved.
 
 Optional spawn animation begins.
 
@@ -216,7 +208,7 @@ The Pickup System receives requests from external systems.
 ```text
 PickupSpawnRequest
 
-PickupData Pickup
+string PickupPrefabId
 
 int Quantity
 
@@ -264,7 +256,7 @@ Examples include:
 * Manual interaction
 * Quest requirements
 
-These rules should remain configurable through PickupData where possible.
+These rules should remain configurable through Pickup's own fields where possible.
 
 ---
 

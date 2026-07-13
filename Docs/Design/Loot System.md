@@ -111,7 +111,7 @@ Represents a single entry inside a LootTable.
 
 A LootEntry may reference either:
 
-* PickupData
+* A Pickup prefab (by addressable id)
 * Another LootTable
 
 This enables hierarchical loot generation.
@@ -261,14 +261,14 @@ Loot generation produces spawn requests instead of GameObjects.
 ```
 PickupSpawnRequest
 
-PickupData Pickup
+string PickupPrefabId
 
 int Quantity
 
 Vector3 Position
 ```
 
-`LootDropper` fills in `Position` from the `LootContext.Victim`'s location before handing the request to the `PickupSpawner`. This is the single canonical definition of `PickupSpawnRequest`, shared with the Pickup System doc.
+`PickupPrefabId` is the addressable id of a prefab carrying a `Pickup` component. There is no separate pickup data asset - the prefab's own fields are the data, so it can be tuned and hand-placed directly in a scene. `LootTable.Roll` fills in `Position` from the `LootContext.Victim`'s location before the request is handed to the `PickupSpawner`. This is the single canonical definition of `PickupSpawnRequest`, shared with the Pickup System doc.
 
 The PickupSpawner determines:
 
