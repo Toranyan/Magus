@@ -109,7 +109,7 @@ namespace magus.battle
 
         private Vector3 RandomSpread()
         {
-            var offset = Random.insideUnitCircle * _spawnSpreadRadius;
+            var offset = UnityEngine.Random.insideUnitCircle * _spawnSpreadRadius;
             return new Vector3(offset.x, 0f, offset.y);
         }
 
