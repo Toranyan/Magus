@@ -16,9 +16,16 @@ namespace magus.battle
         [SerializeField]
         private SphereCollider _collectionTrigger;
 
+        [SerializeField]
         private PickupData _data;
+
+        [SerializeField]
         private PoolableHandler _handle;
+
+        [SerializeField]
         private float _aliveTime;
+
+        [SerializeField]
         private bool _collectible;
 
         public event Action<Pickup> Collected;
