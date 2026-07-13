@@ -18,7 +18,12 @@ namespace magus.battle
         [SerializeField] private SphereCollider _collectionTrigger;
 
         [SerializeField] private float _pickupRadius = 0.5f;
+
+        [Tooltip("Radius that starts pulling an eligible collector's pickup toward it. 0 = no magnet.")]
         [SerializeField] private float _magnetRadius = 3f;
+
+        [Tooltip("Units/second the pickup moves toward its magnet target.")]
+        [SerializeField] private float _magnetSpeed = 8f;
 
         [Tooltip("Seconds before an uncollected pickup is returned to the pool. 0 = never expires.")]
         [SerializeField] private float _lifetime = 20f;
@@ -101,7 +106,50 @@ namespace magus.battle
                 _collectible = true;
 
             if (_lifetime > 0f && _aliveTime >= _lifetime)
+            {
                 Expire();
+                return;
+            }
+
+            if (_collectible && _magnetRadius > 0f)
+                UpdateMagnet();
+        }
+
+        /// <summary>Pulls the pickup toward the nearest eligible collector within
+        /// _magnetRadius, at a constant speed. Only runs once _collectible so a
+        /// pickup doesn't dart away mid-spawn-delay; actual collection still happens
+        /// through OnTriggerEnter once it arrives.</summary>
+        private void UpdateMagnet()
+        {
+            var target = FindMagnetTarget();
+            if (target == null) return;
+
+            transform.position = Vector3.MoveTowards(transform.position, target.transform.position, _magnetSpeed * Time.deltaTime);
+        }
+
+        private Unit FindMagnetTarget()
+        {
+            var mask = LayerMask.GetMask("Character");
+            var hits = Physics.OverlapSphere(transform.position, _magnetRadius, mask);
+
+            Unit closest = null;
+            float closestDistSqr = float.MaxValue;
+
+            foreach (var hit in hits)
+            {
+                var unit = hit.GetComponent<Unit>();
+                if (unit == null || !unit.IsAlive || unit.TeamId != _collectorTeamId)
+                    continue;
+
+                float distSqr = (unit.transform.position - transform.position).sqrMagnitude;
+                if (distSqr < closestDistSqr)
+                {
+                    closest = unit;
+                    closestDistSqr = distSqr;
+                }
+            }
+
+            return closest;
         }
 
         private void OnTriggerEnter(Collider other)

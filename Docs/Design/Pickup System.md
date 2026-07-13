@@ -169,7 +169,7 @@ Gameplay systems may also interact with the Pickup during this phase.
 
 Examples:
 
-* Magnet attraction
+* Magnet attraction - **implemented**: once collectible, a Pickup finds the nearest eligible collector (matching CollectorTeamId) within MagnetRadius via an OverlapSphere check each frame and moves toward it at a constant MagnetSpeed. Actual collection still happens through the existing collision/OnTriggerEnter path once it arrives - the magnet only moves the pickup, it doesn't collect early. MagnetRadius of 0 disables it.
 * Vacuum abilities
 * Conveyor belts
 * Wind effects
