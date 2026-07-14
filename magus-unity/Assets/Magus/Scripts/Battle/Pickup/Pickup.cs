@@ -154,15 +154,25 @@ namespace magus.battle
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!_collectible) return;
+			OnTriggerEnterOrStay(other);
+		}
 
-            var unit = other.GetComponent<Unit>();
-            if (unit == null || !unit.IsAlive || unit.TeamId != _collectorTeamId) return;
+        private void OnTriggerStay(Collider other)
+        {
+            OnTriggerEnterOrStay(other);
+		}
 
-            Collect(unit);
-        }
+        private void OnTriggerEnterOrStay(Collider other)
+        {
+			if (!_collectible) return;
 
-        private void Collect(Unit collector)
+			var unit = other.GetComponent<Unit>();
+			if (unit == null || !unit.IsAlive || unit.TeamId != _collectorTeamId) return;
+
+			Collect(unit);
+		}
+
+		private void Collect(Unit collector)
         {
             _effect?.Apply(collector);
 

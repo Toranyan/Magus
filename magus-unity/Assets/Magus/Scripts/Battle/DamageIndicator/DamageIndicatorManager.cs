@@ -13,6 +13,9 @@ namespace magus.ui
         [SerializeField]
         private Transform _indicatorContainer;
 
+        [SerializeField]
+        private float _defaultFontSize = 3;
+
         private ObjectPool<DamageIndicator3d> _indicatorPool;
 
         public void Awake()
@@ -83,7 +86,7 @@ namespace magus.ui
 
 			//TODO resolve size based on damage amount
 
-			ShowIndicator(damageInfo.HitPosition, damageInfo.Amount, Color.red, 1.5f);
+			ShowIndicator(damageInfo.HitPosition, damageInfo.Amount, Color.red, _defaultFontSize);
 		}
 
 

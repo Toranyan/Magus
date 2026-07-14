@@ -17,6 +17,9 @@ namespace magus.battle
         [SerializeField]
         private float _riseDistance =1.0f;
 
+        [SerializeField]
+        private bool _recomputeRotationPerUpdate = false;
+
         public event Action Finished;
 
         private Color _baseColor = Color.white;
@@ -30,6 +33,8 @@ namespace magus.battle
                 _damageText.color = _baseColor;
                 _damageText.fontSize = size;
             }
+
+            ApplyBillboardRotation();
         }
 
         public void StartAnimation()
@@ -68,12 +73,16 @@ namespace magus.battle
 
         private void Update()
         {
-            // billboard to main camera if available
+            if (_recomputeRotationPerUpdate)
+                ApplyBillboardRotation();
+        }
+
+        private void ApplyBillboardRotation()
+        {
             var cam = Camera.main;
             if (cam != null)
             {
-                // Face the camera
-                transform.rotation = Quaternion.LookRotation(transform.position - cam.transform.position);
+                transform.rotation = Quaternion.LookRotation(cam.transform.forward);
             }
         }
     }
