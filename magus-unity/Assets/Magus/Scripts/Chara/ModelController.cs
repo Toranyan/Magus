@@ -142,11 +142,13 @@ namespace magus.chara
 
 		public void StartDeathAnimation()
 		{
-			//DeathAnimation().Forget();
-
 			if (_ragdollOnDeath)
 			{
 				Ragdoll().Forget();
+			} 
+			else
+			{
+				DeathAnimation().Forget();
 			}
 		}
 

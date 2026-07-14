@@ -77,7 +77,7 @@ namespace magus.battle
 			await MasterData.LoadDataAsync();
 
 			_playerController.Initialize();
-			_playerController.Unit.Killed += OnPlayerKilled;
+			_playerController.Died += OnPlayerKilled;
 
 			_followCamera.FollowTarget = _playerController.gameObject;
 			_followCamera.LookTarget = _playerController.gameObject;
@@ -97,7 +97,7 @@ namespace magus.battle
 				spawner.ResetSpawner();
 			}
 
-			_playerController.transform.position = Vector3.zero; //TODO move to map start position
+			_playerController.transform.position = new Vector3(0, 1, 0); //TODO move to map start position
 			_playerController.Reset();
 
 		}

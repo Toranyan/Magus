@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 using magus.input;
 using magus.battle;
 using magus.master;
@@ -13,6 +14,12 @@ namespace magus.chara
 
         public Unit Unit => _charaController.Unit;
         public PlayerProgression Progression => _progression;
+
+        /// <summary>Fires once the death animation/ragdoll has fully played out and
+        /// the player object has been deactivated - the correct point to reset and
+        /// respawn, rather than reacting to Unit.Killed directly (which fires before
+        /// the death sequence has finished).</summary>
+        public event Action Died;
 
 		private UnitSpellInstance[] _preparedSpells = new UnitSpellInstance[3];
         private Unit _targetEnemy;
@@ -37,6 +44,8 @@ namespace magus.chara
 
 		public void Reset()
 		{
+			gameObject.SetActive(true);
+			_charaController.Setup();
 		}
 
 		public void SetSpell(int index, UnitSpellInstance spell)
@@ -141,6 +150,7 @@ namespace magus.chara
         private void OnDeathAnimationFinished()
         {
             gameObject.SetActive(false);
+            Died?.Invoke();
         }
     }
 }
