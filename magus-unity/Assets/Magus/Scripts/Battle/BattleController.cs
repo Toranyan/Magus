@@ -84,7 +84,8 @@ namespace magus.battle
 		}
 
 		/// <summary>Clears all dynamic battle content - active projectiles, effects,
-		/// pickups, and spawned enemies - back to a clean map. Does not touch the player.</summary>
+		/// pickups, and spawned enemies - back to a clean map. 
+		/// Reset the player</summary>
 		public void Reset()
 		{
 			_projectileManager.ClearAll();
@@ -95,6 +96,10 @@ namespace magus.battle
 			{
 				spawner.ResetSpawner();
 			}
+
+			_playerController.transform.position = Vector3.zero; //TODO move to map start position
+			_playerController.Reset();
+
 		}
 
 		private void OnPlayerKilled()

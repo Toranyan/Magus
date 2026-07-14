@@ -75,8 +75,7 @@ namespace magus.battle
             DamageReceived?.Invoke(info);
             if (!IsAlive)
             {
-                InterruptCast();
-                Killed?.Invoke();
+                OnKilled();
             }
         }
 
@@ -99,5 +98,18 @@ namespace magus.battle
             CurrentMana = Mathf.Min(_maxMana, CurrentMana + amount);
             ManaChanged?.Invoke(CurrentMana);
         }
+
+        public void Kill()
+        {
+            CurrentHp = 0;
+        }
+
+        private void OnKilled()
+        {
+			InterruptCast();
+
+			Killed?.Invoke();
+		}
+
     }
 }

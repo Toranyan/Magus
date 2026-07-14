@@ -8,11 +8,10 @@ namespace magus.chara
 {
     public class PlayerController : MonoBehaviour
     {
-        [SerializeField] private Unit _unit;
         [SerializeField] private GameCharaController _charaController;
         [SerializeField] private PlayerProgression _progression;
 
-        public Unit Unit => _unit;
+        public Unit Unit => _charaController.Unit;
         public PlayerProgression Progression => _progression;
 
 		private UnitSpellInstance[] _preparedSpells = new UnitSpellInstance[3];
@@ -20,7 +19,6 @@ namespace magus.chara
 
         private void Awake()
         {
-            _unit.Killed += OnUnitKilled;
             _charaController.DeathAnimationFinished += OnDeathAnimationFinished;
         }
 
@@ -34,11 +32,14 @@ namespace magus.chara
             // TODO: load spells from run data / spell draft instead of hardcoding
             LoadDefaultSpells();
 
-            _unit.Setup();
             _charaController.Setup();
         }
 
-        public void SetSpell(int index, UnitSpellInstance spell)
+		public void Reset()
+		{
+		}
+
+		public void SetSpell(int index, UnitSpellInstance spell)
         {
             if (index < 0 || index >= _preparedSpells.Length)
             {
@@ -52,14 +53,14 @@ namespace magus.chara
         {
             var fireballMaster = MasterData.GetMasterData<SpellMasterData>("spell_fireball_01");
             if (fireballMaster != null)
-                _preparedSpells[0] = new UnitSpellInstance(new SpellInfo(fireballMaster), _unit);
+                _preparedSpells[0] = new UnitSpellInstance(new SpellInfo(fireballMaster), Unit);
 
             // TODO: populate slots 1 and 2 once more spells exist
         }
 
         private void Update()
         {
-            if (!_unit.IsAlive) return;
+            if (!Unit.IsAlive) return;
             UpdateMoveVector();
             UpdateTarget();
             TickSpells();
@@ -103,7 +104,7 @@ namespace magus.chara
             var context = new SpellCastContext
             {
                 Info           = spell.Info,
-                Caster         = _unit,
+                Caster         = Unit,
                 Target         = _targetEnemy,
                 CastPosition   = transform.position,
                 TargetPosition = targetPos,
@@ -123,7 +124,7 @@ namespace magus.chara
             foreach (var hit in hits)
             {
                 var unit = hit.GetComponent<Unit>();
-                if (unit == null || unit == _unit || unit.TeamId == _unit.TeamId || !unit.IsAlive)
+                if (unit == null || unit == Unit || unit.TeamId == Unit.TeamId || !unit.IsAlive)
                     continue;
 
                 float distSqr = (unit.transform.position - transform.position).sqrMagnitude;
@@ -135,11 +136,6 @@ namespace magus.chara
             }
 
             return closest;
-        }
-
-        private void OnUnitKilled()
-        {
-            _charaController.StartDeathAnimation();
         }
 
         private void OnDeathAnimationFinished()

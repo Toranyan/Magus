@@ -6,7 +6,6 @@ namespace magus.chara
 {
     public class EnemyController : MonoBehaviour
     {
-        [SerializeField] private Unit _unit;
         [SerializeField] private GameCharaController _charaController;
         [SerializeField] private float _detectRange;
         [SerializeField] private MonoBehaviour _attackBehaviour;
@@ -17,6 +16,8 @@ namespace magus.chara
 
         public event Action<EnemyController> Killed;
 
+        private Unit Unit => _charaController.Unit;
+
         private enum State { Idle, Chase, Attack }
 
         private void Awake()
@@ -25,7 +26,7 @@ namespace magus.chara
             if (_attack == null)
                 Debug.LogError($"[EnemyController] {name}: _attackBehaviour does not implement IUnitAttack.");
 
-            _unit.Killed += OnUnitKilled;
+            _charaController.Killed += OnUnitKilled;
             _charaController.DeathAnimationFinished += OnDeathAnimationFinished;
         }
 
@@ -36,16 +37,15 @@ namespace magus.chara
 
         private void Setup()
         {
-            _unit.Setup();
             _charaController.Setup();
-            _attack?.SetOwner(_unit);
+            _attack?.SetOwner(Unit);
             _target = null;
             _state = State.Idle;
         }
 
         private void Update()
         {
-            if (!_unit.IsAlive) return;
+            if (!Unit.IsAlive) return;
 
             switch (_state)
             {
@@ -121,7 +121,7 @@ namespace magus.chara
             foreach (var col in colliders)
             {
                 var unit = col.GetComponent<Unit>();
-                if (unit == null || unit == _unit || unit.TeamId == _unit.TeamId || !unit.IsAlive)
+                if (unit == null || unit == Unit || unit.TeamId == Unit.TeamId || !unit.IsAlive)
                     continue;
 
                 float distSqr = (col.transform.position - transform.position).sqrMagnitude;
@@ -137,7 +137,6 @@ namespace magus.chara
 
         private void OnUnitKilled()
         {
-            _charaController.StartDeathAnimation();
             Killed?.Invoke(this);
         }
 
