@@ -13,14 +13,22 @@ namespace magus.chara
     {
         [SerializeField] private Unit _unit;
         [SerializeField] private ModelController _modelController;
+        [SerializeField] private MonoBehaviour _attackBehaviour;
+
+        private IUnitAttack _attack;
 
         public Unit Unit => _unit;
+        public IUnitAttack Attack => _attack;
 
         public event Action Killed;
         public event Action DeathAnimationFinished;
 
         private void Awake()
         {
+            _attack = _attackBehaviour as IUnitAttack;
+            if (_attack == null)
+                Debug.LogError($"[GameCharaController] {name}: _attackBehaviour does not implement IUnitAttack.");
+
             _unit.Killed += HandleUnitKilled;
             _modelController.DeathAnimationFinished += OnModelDeathAnimationFinished;
         }
@@ -29,6 +37,7 @@ namespace magus.chara
         {
             _unit.Setup();
             _modelController.Setup();
+            _attack?.SetOwner(_unit);
         }
 
         public void SetMoveVector(Vector3 moveVec)

@@ -8,24 +8,19 @@ namespace magus.chara
     {
         [SerializeField] private GameCharaController _charaController;
         [SerializeField] private float _detectRange;
-        [SerializeField] private MonoBehaviour _attackBehaviour;
 
-        private IUnitAttack _attack;
         private Unit _target;
         private State _state;
 
         public event Action<EnemyController> Killed;
 
         private Unit Unit => _charaController.Unit;
+        private IUnitAttack Attack => _charaController.Attack;
 
         private enum State { Idle, Chase, Attack }
 
         private void Awake()
         {
-            _attack = _attackBehaviour as IUnitAttack;
-            if (_attack == null)
-                Debug.LogError($"[EnemyController] {name}: _attackBehaviour does not implement IUnitAttack.");
-
             _charaController.Killed += OnUnitKilled;
             _charaController.DeathAnimationFinished += OnDeathAnimationFinished;
         }
@@ -38,7 +33,6 @@ namespace magus.chara
         private void Setup()
         {
             _charaController.Setup();
-            _attack?.SetOwner(Unit);
             _target = null;
             _state = State.Idle;
         }
@@ -72,7 +66,7 @@ namespace magus.chara
             }
 
             float dist = Vector3.Distance(_target.transform.position, transform.position);
-            if (dist <= _attack.Range)
+            if (dist <= Attack.Range)
             {
                 SetState(State.Attack);
                 return;
@@ -90,14 +84,14 @@ namespace magus.chara
             }
 
             float dist = Vector3.Distance(_target.transform.position, transform.position);
-            if (dist > _attack.Range)
+            if (dist > Attack.Range)
             {
                 SetState(State.Chase);
                 return;
             }
 
             _charaController.SetMoveVector(Vector3.zero);
-            _attack?.Attack(_target.transform.position);
+            Attack?.Attack(_target.transform.position);
         }
 
         private void SetState(State state)
