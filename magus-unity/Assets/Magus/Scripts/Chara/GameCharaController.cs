@@ -45,6 +45,25 @@ namespace magus.chara
             _modelController.SetMoveVector(moveVec);
         }
 
+        /// <summary>
+        /// Moves toward a target position on the horizontal plane. Returns true once
+        /// within stoppingDistance, at which point movement is stopped.
+        /// </summary>
+        public bool MoveToPosition(Vector3 targetPosition, float stoppingDistance = 0.1f)
+        {
+            Vector3 toTarget = targetPosition - transform.position;
+            toTarget.y = 0f;
+
+            if (toTarget.magnitude <= stoppingDistance)
+            {
+                SetMoveVector(Vector3.zero);
+                return true;
+            }
+
+            SetMoveVector(toTarget.normalized);
+            return false;
+        }
+
         private void HandleUnitKilled()
         {
             _modelController.SetMoveVector(Vector3.zero);

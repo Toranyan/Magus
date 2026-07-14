@@ -9,8 +9,17 @@ namespace magus.chara
         [SerializeField] private GameCharaController _charaController;
         [SerializeField] private float _detectRange;
 
+        [Header("Idle Wander")]
+        [SerializeField] private float _wanderRadius = 3f;
+        [SerializeField] private float _wanderIntervalMin = 2f;
+        [SerializeField] private float _wanderIntervalMax = 5f;
+
         private Unit _target;
         private State _state;
+
+        private Vector3 _wanderOrigin;
+        private Vector3 _wanderTarget;
+        private float _nextWanderPickTime;
 
         public event Action<EnemyController> Killed;
 
@@ -35,6 +44,9 @@ namespace magus.chara
             _charaController.Setup();
             _target = null;
             _state = State.Idle;
+
+            _wanderOrigin = transform.position;
+            _nextWanderPickTime = Time.time;
         }
 
         private void Update()
@@ -51,10 +63,24 @@ namespace magus.chara
 
         private void UpdateIdle()
         {
-            _charaController.SetMoveVector(Vector3.zero);
             _target = FindTarget();
             if (_target != null)
+            {
                 SetState(State.Chase);
+                return;
+            }
+
+            if (Time.time >= _nextWanderPickTime)
+                PickNewWanderTarget();
+
+            _charaController.MoveToPosition(_wanderTarget);
+        }
+
+        private void PickNewWanderTarget()
+        {
+            Vector2 offset = UnityEngine.Random.insideUnitCircle * _wanderRadius;
+            _wanderTarget = _wanderOrigin + new Vector3(offset.x, 0f, offset.y);
+            _nextWanderPickTime = Time.time + UnityEngine.Random.Range(_wanderIntervalMin, _wanderIntervalMax);
         }
 
         private void UpdateChase()
@@ -96,6 +122,9 @@ namespace magus.chara
 
         private void SetState(State state)
         {
+            if (state == State.Idle && _state != State.Idle)
+                _nextWanderPickTime = Time.time;
+
             _state = state;
         }
 
