@@ -98,7 +98,7 @@ namespace magus.chara
                 return;
             }
 
-            _charaController.SetMoveVector(_target.transform.position - transform.position);
+            _charaController.MoveToPosition(_target.transform.position, Attack.Range, _target.transform);
         }
 
         private void UpdateAttack()
