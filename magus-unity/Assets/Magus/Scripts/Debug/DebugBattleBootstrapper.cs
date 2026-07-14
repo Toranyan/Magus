@@ -25,6 +25,7 @@ namespace magus.debug
 
 			var unitSpell1 = new UnitSpellInstance(new SpellInfo(spellMaster1), playerController.Unit);
 			var unitSpell2 = new UnitSpellInstance(new SpellInfo(spellMaster2), playerController.Unit);
+			unitSpell1.Autocast = true;
 			playerController.SetSpell(0, unitSpell1);
 			playerController.SetSpell(1, unitSpell2);
 

@@ -42,7 +42,7 @@ namespace magus.battle
         {
             foreach (var proj in new List<ProjectileBase>(_activeProjectiles))
             {
-                proj.Kill();
+                proj.Kill(immediate: true);
             }
         }
 

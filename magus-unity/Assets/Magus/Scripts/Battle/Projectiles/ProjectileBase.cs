@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace magus.battle
@@ -21,6 +22,14 @@ namespace magus.battle
 
         [SerializeField]
         private DamageDealer _damageDealer;
+
+        [SerializeField]
+        private ParticleSystem[] _particleSystems;
+
+        /// <summary>Delay between the projectile being disabled (particles stopped) and
+        /// Killed firing so it can be returned to the pool. Gives trailing particles time to fade out.</summary>
+        [SerializeField]
+        private float _cleanupDelay = 2f;
 
         private Vector3 _velocity;
         private bool _isAlive;
@@ -61,17 +70,50 @@ namespace magus.battle
             EffectRequested = null;
         }
 
-        public void Kill()
+        /// <summary>Stops the projectile and lets it fade out; Killed fires after
+        /// _cleanupDelay so the pool reclaim doesn't cut off trailing particles.
+        /// Pass immediate=true (e.g. battlefield reset) to skip the delay and fire Killed right away.</summary>
+        public void Kill(bool immediate = false)
         {
             if (!_isAlive) return;
             _isAlive = false;
             _damageDealer?.EndAttack();
-            gameObject.SetActive(false);
+            _velocity = Vector3.zero;
+
+			DisableParticles();
 
             if (!string.IsNullOrEmpty(_deathEffectId))
             {
                 EffectRequested?.Invoke(_deathEffectId, transform.position);
             }
+
+            if (immediate)
+            {
+                Killed?.Invoke(this);
+            }
+            else
+            {
+                WaitAndFireKilled().Forget();
+            }
+        }
+
+        private void DisableParticles()
+        {
+            if (_particleSystems == null) return;
+
+            foreach (var ps in _particleSystems)
+            {
+                if (ps == null) continue;
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            }
+        }
+
+        private async UniTaskVoid WaitAndFireKilled()
+        {
+            await UniTask.Delay(
+                TimeSpan.FromSeconds(_cleanupDelay),
+                cancellationToken: this.GetCancellationTokenOnDestroy()
+            );
 
             Killed?.Invoke(this);
         }

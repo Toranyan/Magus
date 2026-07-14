@@ -12,6 +12,11 @@ namespace magus.battle
         public float CooldownRemaining { get; private set; }
         public bool IsReady => CooldownRemaining <= 0f;
 
+        // When true, the owner will keep attempting to cast this spell automatically
+        // (e.g. every frame) instead of only on explicit input. TryCast already no-ops
+        // while on cooldown, so it's safe to call repeatedly.
+        public bool Autocast { get; set; }
+
         public UnitSpellInstance(SpellInfo info, IBattleEntity owner)
         {
             Info  = info;

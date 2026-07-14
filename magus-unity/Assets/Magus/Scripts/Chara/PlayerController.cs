@@ -37,7 +37,7 @@ namespace magus.chara
 
             // TODO: bind third spell slot when input action is available
             // TODO: load spells from run data / spell draft instead of hardcoding
-            LoadDefaultSpells();
+            //LoadDefaultSpells();
 
             _charaController.Setup();
         }
@@ -73,6 +73,7 @@ namespace magus.chara
             UpdateMoveVector();
             UpdateTarget();
             TickSpells();
+            AutocastSpells();
         }
 
         private void UpdateMoveVector()
@@ -106,6 +107,20 @@ namespace magus.chara
                 return;
             }
 
+            TryCastSpell(spell);
+        }
+
+        private void AutocastSpells()
+        {
+            foreach (var spell in _preparedSpells)
+            {
+                if (spell != null && spell.Autocast)
+                    TryCastSpell(spell);
+            }
+        }
+
+        private bool TryCastSpell(UnitSpellInstance spell)
+        {
             var targetPos = _targetEnemy != null
                 ? _targetEnemy.transform.position
                 : transform.position + transform.forward * spell.Info.Range;
@@ -119,7 +134,7 @@ namespace magus.chara
                 TargetPosition = targetPos,
             };
 
-            spell.TryCast(context);
+            return spell.TryCast(context);
         }
 
         private Unit FindClosestEnemy()
