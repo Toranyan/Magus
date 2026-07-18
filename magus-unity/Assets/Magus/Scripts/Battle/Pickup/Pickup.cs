@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine;
 
@@ -42,6 +43,21 @@ namespace magus.battle
         [SerializeField] private int _collectorTeamId = 0;
 
         [SerializeField]
+        private ParticleSystem[] _particleSystems;
+
+        [SerializeField]
+        private TrailRenderer[] _trailRenderers;
+
+        [Tooltip("Objects to disable immediately on collect/expire (e.g. the main mesh) while particles/trails keep fading. Re-enabled in OnEnable for the next pooled use.")]
+        [SerializeField]
+        private GameObject[] _bodyObjects;
+
+        /// <summary>Delay between the pickup being collected/expired (particles/trails stopped) and
+        /// Collected/Expired firing so it can be returned to the pool. Gives trailing effects time to fade out.</summary>
+        [SerializeField]
+        private float _cleanupDelay = 1f;
+
+        [SerializeField]
         private PoolableHandler _handle;
 
         [SerializeField]
@@ -49,6 +65,8 @@ namespace magus.battle
 
         [SerializeField]
         private bool _collectible;
+
+        private bool _isAlive;
 
         public event Action<Pickup> Collected;
         public event Action<Pickup> Expired;
@@ -70,6 +88,9 @@ namespace magus.battle
         {
             _aliveTime = 0f;
             _collectible = _collectionDelay <= 0f;
+            _isAlive = true;
+
+            ResetVisuals();
 
             RequestEffect(_spawnVfxId);
             RequestEffect(_spawnSfxId);
@@ -100,6 +121,8 @@ namespace magus.battle
 
         private void Update()
         {
+            if (!_isAlive) return;
+
             _aliveTime += Time.deltaTime;
 
             if (!_collectible && _aliveTime >= _collectionDelay)
@@ -174,22 +197,161 @@ namespace magus.battle
 
 		private void Collect(Unit collector)
         {
+            if (!_isAlive) return;
+            _isAlive = false;
+            _collectible = false;
+
             _effect?.Apply(collector);
 
             RequestEffect(_collectionVfxId);
             RequestEffect(_collectionSfxId);
 
-            Collected?.Invoke(this);
+            Finish(wasCollected: true, immediate: false);
+        }
+
+        /// <summary>Stops the pickup and lets its particles fade out; Expired fires after
+        /// _cleanupDelay so the pool reclaim doesn't cut off trailing particles. Called on
+        /// its own timeout, or externally (e.g. PickupSpawner.ClearAll on battle reset) with
+        /// immediate=true to skip the delay and force-remove it right away.</summary>
+        public void Expire(bool immediate = false)
+        {
+            if (!_isAlive) return;
+            _isAlive = false;
+            _collectible = false;
+
+            Finish(wasCollected: false, immediate);
+        }
+
+        private void Finish(bool wasCollected, bool immediate)
+        {
+            DisableParticles();
+            DisableTrails();
+            DisableBody();
+
+            if (immediate || _cleanupDelay <= 0f)
+            {
+                FireOutcome(wasCollected);
+                FinalizeCleanup();
+            }
+            else
+            {
+                WaitAndFinish(wasCollected).Forget();
+            }
+        }
+
+        private async UniTaskVoid WaitAndFinish(bool wasCollected)
+        {
+            await UniTask.Delay(
+                TimeSpan.FromSeconds(_cleanupDelay),
+                cancellationToken: this.GetCancellationTokenOnDestroy()
+            );
+
+            FireOutcome(wasCollected);
+            FinalizeCleanup();
+        }
+
+        private void FireOutcome(bool wasCollected)
+        {
+            if (wasCollected)
+                Collected?.Invoke(this);
+            else
+                Expired?.Invoke(this);
+        }
+
+        /// <summary>Wipes any trail data that hasn't faded out on its own (e.g. a
+        /// TrailRenderer.time longer than _cleanupDelay) before returning to the pool,
+        /// so the next reuse doesn't spawn with a stale trail attached.</summary>
+        private void FinalizeCleanup()
+        {
+            ClearTrails();
             ReturnOrDeactivate();
         }
 
-        /// <summary>Returns this pickup to its pool without applying its effect.
-        /// Called on its own timeout, or externally (e.g. PickupSpawner.ClearAll on
-        /// battle reset) to force-remove it early.</summary>
-        public void Expire()
+        /// <summary>Restores particles/trails/body to their live-and-visible state.
+        /// Called on (re)spawn so a pickup pulled fresh from the pool doesn't come back
+        /// with the stopped/hidden state left over from its previous collect/expire.</summary>
+        private void ResetVisuals()
         {
-            Expired?.Invoke(this);
-            ReturnOrDeactivate();
+            EnableParticles();
+            EnableTrails();
+            EnableBody();
+        }
+
+        private void DisableParticles()
+        {
+            if (_particleSystems == null) return;
+
+            foreach (var ps in _particleSystems)
+            {
+                if (ps == null) continue;
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            }
+        }
+
+        private void EnableParticles()
+        {
+            if (_particleSystems == null) return;
+
+            foreach (var ps in _particleSystems)
+            {
+                if (ps == null) continue;
+                ps.Play(true);
+            }
+        }
+
+        private void DisableTrails()
+        {
+            if (_trailRenderers == null) return;
+
+            foreach (var trail in _trailRenderers)
+            {
+                if (trail == null) continue;
+                trail.emitting = false;
+            }
+        }
+
+        private void EnableTrails()
+        {
+            if (_trailRenderers == null) return;
+
+            foreach (var trail in _trailRenderers)
+            {
+                if (trail == null) continue;
+                trail.emitting = true;
+            }
+        }
+
+        private void ClearTrails()
+        {
+            if (_trailRenderers == null) return;
+
+            foreach (var trail in _trailRenderers)
+            {
+                if (trail == null) continue;
+                trail.Clear();
+            }
+        }
+
+        private void DisableBody()
+        {
+            if (_bodyObjects == null) return;
+
+            foreach (var go in _bodyObjects)
+            {
+                if (go == null) continue;
+                go.SetActive(false);
+            }
+        }
+
+        private void EnableBody()
+        {
+            if (_bodyObjects == null) return;
+
+            foreach (var go in _bodyObjects)
+            {
+                if (go == null) continue;
+                go.SetActive(true);
+            }
         }
 
         /// <summary>Pooled instances return to their pool; a hand-placed instance

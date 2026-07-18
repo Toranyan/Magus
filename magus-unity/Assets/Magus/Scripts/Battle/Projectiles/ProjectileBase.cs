@@ -26,8 +26,15 @@ namespace magus.battle
         [SerializeField]
         private ParticleSystem[] _particleSystems;
 
-        /// <summary>Delay between the projectile being disabled (particles stopped) and
-        /// Killed firing so it can be returned to the pool. Gives trailing particles time to fade out.</summary>
+        [SerializeField]
+        private TrailRenderer[] _trailRenderers;
+
+        [Tooltip("Objects to disable immediately on kill (e.g. the main mesh) while particles/trails keep fading. Re-enabled in Setup for the next pooled use.")]
+        [SerializeField]
+        private GameObject[] _bodyObjects;
+
+        /// <summary>Delay between the projectile being disabled (particles/trails stopped) and
+        /// Killed firing so it can be returned to the pool. Gives trailing effects time to fade out.</summary>
         [SerializeField]
         private float _cleanupDelay = 2f;
 
@@ -62,6 +69,8 @@ namespace magus.battle
             _isAlive = true;
             _aliveTime = 0f;
             _damageDealer?.BeginAttack();
+
+            ResetVisuals();
         }
 
         public void ClearEvents()
@@ -81,6 +90,8 @@ namespace magus.battle
             _velocity = Vector3.zero;
 
 			DisableParticles();
+            DisableTrails();
+            DisableBody();
 
             if (!string.IsNullOrEmpty(_deathEffectId))
             {
@@ -89,12 +100,23 @@ namespace magus.battle
 
             if (immediate)
             {
+                ClearTrails();
                 Killed?.Invoke(this);
             }
             else
             {
                 WaitAndFireKilled().Forget();
             }
+        }
+
+        /// <summary>Restores particles/trails/body to their live-and-visible state.
+        /// Called on (re)spawn so a projectile pulled fresh from the pool doesn't come
+        /// back with the stopped/hidden state left over from its previous kill.</summary>
+        private void ResetVisuals()
+        {
+            EnableParticles();
+            EnableTrails();
+            EnableBody();
         }
 
         private void DisableParticles()
@@ -108,6 +130,75 @@ namespace magus.battle
             }
         }
 
+        private void EnableParticles()
+        {
+            if (_particleSystems == null) return;
+
+            foreach (var ps in _particleSystems)
+            {
+                if (ps == null) continue;
+                ps.Play(true);
+            }
+        }
+
+        private void DisableTrails()
+        {
+            if (_trailRenderers == null) return;
+
+            foreach (var trail in _trailRenderers)
+            {
+                if (trail == null) continue;
+                trail.emitting = false;
+            }
+        }
+
+        private void EnableTrails()
+        {
+            if (_trailRenderers == null) return;
+
+            foreach (var trail in _trailRenderers)
+            {
+                if (trail == null) continue;
+                trail.emitting = true;
+            }
+        }
+
+        /// <summary>Wipes any trail data that hasn't faded out on its own (e.g. a
+        /// TrailRenderer.time longer than _cleanupDelay) before the projectile is
+        /// returned to the pool, so the next reuse doesn't spawn with a stale trail attached.</summary>
+        private void ClearTrails()
+        {
+            if (_trailRenderers == null) return;
+
+            foreach (var trail in _trailRenderers)
+            {
+                if (trail == null) continue;
+                trail.Clear();
+            }
+        }
+
+        private void DisableBody()
+        {
+            if (_bodyObjects == null) return;
+
+            foreach (var go in _bodyObjects)
+            {
+                if (go == null) continue;
+                go.SetActive(false);
+            }
+        }
+
+        private void EnableBody()
+        {
+            if (_bodyObjects == null) return;
+
+            foreach (var go in _bodyObjects)
+            {
+                if (go == null) continue;
+                go.SetActive(true);
+            }
+        }
+
         private async UniTaskVoid WaitAndFireKilled()
         {
             await UniTask.Delay(
@@ -115,6 +206,7 @@ namespace magus.battle
                 cancellationToken: this.GetCancellationTokenOnDestroy()
             );
 
+            ClearTrails();
             Killed?.Invoke(this);
         }
 

@@ -49,7 +49,7 @@ namespace magus.battle
         {
             foreach (var pickup in new List<Pickup>(_activePickups))
             {
-                pickup.Expire();
+                pickup.Expire(immediate: true);
             }
         }
 
