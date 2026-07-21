@@ -44,9 +44,19 @@ namespace magus.battle
             if (executor == null)
                 return false;
 
+            // Resolved once here, at the point the caster commits to this cast —
+            // same snapshot-at-commit approach as DamageDealer.BeginAttack.
+            var ownerUnit = Owner as Unit;
+            context.ResolvedCastTime = ownerUnit != null
+                ? ownerUnit.Modifiers.Resolve(ModifierType.CastTime, Info.CastTime)
+                : Info.CastTime;
+
             executor.Execute(context);
 
-            CooldownRemaining = Info.Cooldown;
+            CooldownRemaining = ownerUnit != null
+                ? ownerUnit.Modifiers.Resolve(ModifierType.Cooldown, Info.Cooldown)
+                : Info.Cooldown;
+
             return true;
         }
     }

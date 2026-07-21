@@ -48,6 +48,7 @@ namespace magus.chara
         {
             _unit.Setup();
             _modelController.Setup();
+            _modelController.SetOwner(_unit);
             _attack?.SetOwner(_unit);
         }
 

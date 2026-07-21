@@ -49,6 +49,8 @@ public class SpellMasterData : BaseMasterData
     public string[] AssetIds;           // prefab references (projectile, effect, etc.)
 
     public float[] Params;              // spell-specific extra parameters
+
+    public string[] StatusEffectIds;    // StatusEffectMasterData ids applied by Buff/Debuff executor types
 }
 ```
 
@@ -83,6 +85,7 @@ public class SpellInfo
 
     public string[] AssetIds;
     public float[] Params;
+    public string[] StatusEffectIds;
 
     public SpellInfo(SpellMasterData data) { ... }
 }

@@ -23,6 +23,10 @@ namespace magus.debug
 
 			var playerController = BattleController.Instance.PlayerController;
 
+			var hasteData = MasterData.GetMasterData<StatusEffectMasterData>("status_haste");
+			var statusEffectController = playerController.Unit.GetComponent<StatusEffectController>();
+			statusEffectController.Apply(hasteData);
+
 			var unitSpell1 = new UnitSpellInstance(new SpellInfo(spellMaster1), playerController.Unit);
 			var unitSpell2 = new UnitSpellInstance(new SpellInfo(spellMaster2), playerController.Unit);
 			unitSpell1.Autocast = true;

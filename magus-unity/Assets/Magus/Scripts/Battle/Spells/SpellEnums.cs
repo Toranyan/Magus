@@ -19,7 +19,9 @@ namespace magus.battle
     public enum SpellExecutorType
     {
         Projectile = 0,
-        // TODO: DOTArea, Barrier, Buff, Debuff as needed
+        Buff = 1,
+        Debuff = 2,
+        // TODO: DOTArea, Barrier as needed
     }
 
     public enum ElementType

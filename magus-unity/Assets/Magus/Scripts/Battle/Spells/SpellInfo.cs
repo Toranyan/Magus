@@ -28,6 +28,7 @@ namespace magus.battle
 
         public string[] AssetIds { get; }
         public float[] Params { get; }
+        public string[] StatusEffectIds { get; }
 
         public SpellInfo(SpellMasterData data)
         {
@@ -58,6 +59,7 @@ namespace magus.battle
 
             AssetIds = data.AssetIds;
             Params   = data.Params;
+            StatusEffectIds = data.StatusEffectIds;
         }
     }
 }

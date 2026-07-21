@@ -29,6 +29,7 @@ namespace magus.battle
         private IBattleEntity _owner;
         private readonly HashSet<DamageReceiver> _hitReceivers = new();
         private bool _isActive;
+        private float _resolvedDamage;
 
         public float Damage
         {
@@ -47,11 +48,20 @@ namespace magus.battle
         /// <summary>
         /// Opens the attack window. Clears the hit-deduplication set.
         /// Call this when a swing, projectile, or hazard becomes active.
+        ///
+        /// Also snapshots the owner's Damage modifiers for this window (visual
+        /// separation point per Docs/Design/Modifier System.md) — every hit within
+        /// this window deals the same resolved amount, rather than re-reading the
+        /// owner's current modifiers per hit.
         /// </summary>
         public void BeginAttack()
         {
             _isActive = true;
             _hitReceivers.Clear();
+
+            _resolvedDamage = _owner is Unit ownerUnit
+                ? ownerUnit.Modifiers.Resolve(ModifierType.Damage, _damage)
+                : _damage;
         }
 
         /// <summary>
@@ -80,7 +90,7 @@ namespace magus.battle
 
             target.Damage(new DamageInfo
             {
-                Amount            = _damage,
+                Amount            = _resolvedDamage,
                 Source            = _owner,
                 SourceTeamId      = _owner?.TeamId ?? -1,
                 Type              = _damageType,

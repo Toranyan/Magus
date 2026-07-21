@@ -19,6 +19,8 @@ namespace magus.battle
         public int TeamId => _teamId;
         public GameObject GameObject => gameObject;
 
+        public ModifierCollection Modifiers { get; } = new ModifierCollection();
+
         public float CurrentHp { get; private set; }
         public float MaxHp => _maxHp;
         public bool IsAlive => CurrentHp > 0f;

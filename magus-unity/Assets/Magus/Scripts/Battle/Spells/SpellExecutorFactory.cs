@@ -10,6 +10,8 @@ namespace magus.battle
         private static readonly Dictionary<SpellExecutorType, Func<ISpellExecutor>> _map = new()
         {
             { SpellExecutorType.Projectile, () => new ProjectileSpellExecutor() },
+            { SpellExecutorType.Buff, () => new StatusEffectSpellExecutor() },
+            { SpellExecutorType.Debuff, () => new StatusEffectSpellExecutor() },
             // TODO: register additional executor types as they are implemented
         };
 

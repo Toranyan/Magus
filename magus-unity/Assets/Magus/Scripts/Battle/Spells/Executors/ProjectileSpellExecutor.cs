@@ -12,7 +12,7 @@ namespace magus.battle.spells.executors
 
         private async UniTaskVoid ExecuteAsync(SpellCastContext context)
         {
-            // TODO: cast time — wait context.Info.CastTime before spawning (requires player FSM lock)
+            // TODO: cast time — wait context.ResolvedCastTime before spawning (requires player FSM lock)
 
             var proj = await BattleController.Instance.ProjectileManager
                 .CreateProjectile(context.Info.AssetIds[0], context.Caster);

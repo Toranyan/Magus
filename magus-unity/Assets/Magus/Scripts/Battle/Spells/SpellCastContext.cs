@@ -12,5 +12,10 @@ namespace magus.battle
         public Vector3 CastPosition;
         public Vector3 TargetPosition;
 
+        // Info.CastTime resolved through the caster's Modifiers at the moment
+        // TryCast committed to this cast. No consumer reads this yet — casting is
+        // still instant (see the cast-time TODO in ProjectileSpellExecutor) — but
+        // executors that gate on cast time should read this instead of Info.CastTime.
+        public float ResolvedCastTime;
     }
 }

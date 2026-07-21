@@ -27,5 +27,7 @@ namespace magus.master
         public string[] AssetIds;   // [0] = main prefab, additional entries spell-specific
 
         public float[] Params;      // spell-specific extra parameters
+
+        public string[] StatusEffectIds;   // StatusEffectMasterData ids applied by Buff/Debuff executor types
     }
 }

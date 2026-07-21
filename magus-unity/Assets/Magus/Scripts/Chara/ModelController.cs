@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using magus.battle;
 using UnityEngine;
 
 namespace magus.chara
@@ -39,6 +40,7 @@ namespace magus.chara
 		public LayerMask _groundLayers;
 
 		private Vector3 _moveVector;
+		private Unit _unit;
 
 		public event Action DeathAnimationFinished;
 
@@ -46,10 +48,22 @@ namespace magus.chara
 
 		private float _verticalVelocity;
 
+		// Resolved through the owning Unit's Modifiers (e.g. Haste) when one has been
+		// assigned via SetOwner; falls back to the raw inspector value otherwise.
 		public float MoveSpeed
 		{
-			get { return _moveSpeed; }
+			get
+			{
+				return _unit != null
+					? _unit.Modifiers.Resolve(ModifierType.MoveSpeed, _moveSpeed)
+					: _moveSpeed;
+			}
 			private set { _moveSpeed = value; }
+		}
+
+		public void SetOwner(Unit unit)
+		{
+			_unit = unit;
 		}
 
 		private void Awake()
