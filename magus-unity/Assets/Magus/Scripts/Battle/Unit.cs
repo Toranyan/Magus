@@ -16,7 +16,15 @@ namespace magus.battle
         [SerializeField]
         private Transform _projectileOrigin;
 
+        [SerializeField]
+        private float _threatRating;
+
         public int TeamId => _teamId;
+
+        /// <summary>Relative priority as an automatic-targeting pick. Automatic-mode spell
+        /// targeting picks the highest ThreatRating in range, ties broken by distance.</summary>
+        public float ThreatRating => _threatRating;
+
         public GameObject GameObject => gameObject;
 
         public ModifierCollection Modifiers { get; } = new ModifierCollection();

@@ -13,6 +13,7 @@ namespace magus.battle
         Fireball  = 0,
         WaterJet  = 1,
         BlackHole = 2,
+        Meteor    = 3,
         // TODO: add remaining 15 Tier 1 spell types
     }
 
@@ -21,6 +22,7 @@ namespace magus.battle
         Projectile = 0,
         Buff = 1,
         Debuff = 2,
+        AoE = 3,
         // TODO: DOTArea, Barrier as needed
     }
 

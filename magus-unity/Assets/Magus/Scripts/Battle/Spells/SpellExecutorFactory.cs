@@ -12,6 +12,7 @@ namespace magus.battle
             { SpellExecutorType.Projectile, () => new ProjectileSpellExecutor() },
             { SpellExecutorType.Buff, () => new StatusEffectSpellExecutor() },
             { SpellExecutorType.Debuff, () => new StatusEffectSpellExecutor() },
+            { SpellExecutorType.AoE, () => new AOESpellExecutor() },
             // TODO: register additional executor types as they are implemented
         };
 

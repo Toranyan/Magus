@@ -19,6 +19,7 @@ namespace magus.battle
 
         public float CastTime { get; }
         public float ManaCost { get; }
+        public float Damage { get; }
         public float Cooldown { get; }
         public float Duration { get; }
         public float Speed { get; }
@@ -50,6 +51,7 @@ namespace magus.battle
 
             CastTime  = data.BaseCastTime;
             ManaCost  = data.BaseManaCost;
+            Damage    = data.BaseDamage;
             Cooldown  = data.BaseCooldown;
             Duration  = data.BaseDuration;
             Speed     = data.BaseSpeed;

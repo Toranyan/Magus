@@ -12,8 +12,6 @@ namespace magus.battle.spells.executors
 
         private async UniTaskVoid ExecuteAsync(SpellCastContext context)
         {
-            // TODO: cast time — wait context.ResolvedCastTime before spawning (requires player FSM lock)
-
             var proj = await BattleController.Instance.ProjectileManager
                 .CreateProjectile(context.Info.AssetIds[0], context.Caster);
 
@@ -36,6 +34,12 @@ namespace magus.battle.spells.executors
 
             var dir = (targetPos - castPos);
             dir.y = 0f;
+
+            // Setup() calls DamageDealer.BeginAttack(), which snapshots this Damage
+            // value through the caster's Modifiers - must be set before Setup().
+            if (proj.DamageDealer != null)
+                proj.DamageDealer.Damage = context.Info.Damage;
+
             proj.Setup(dir.normalized * context.Info.Speed);
 
             // TODO: set elemental damage type on projectile (requires DamageType per element)

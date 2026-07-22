@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace magus.battle
@@ -51,13 +54,55 @@ namespace magus.battle
                 ? ownerUnit.Modifiers.Resolve(ModifierType.CastTime, Info.CastTime)
                 : Info.CastTime;
 
-            executor.Execute(context);
+            CastAsync(executor, context, ownerUnit).Forget();
 
             CooldownRemaining = ownerUnit != null
                 ? ownerUnit.Modifiers.Resolve(ModifierType.Cooldown, Info.Cooldown)
                 : Info.Cooldown;
 
             return true;
+        }
+
+        // Runs the cast-time wind-up (if any) before actually executing the spell.
+        // While casting: move speed is halved and Unit.IsCasting is true, both undone
+        // if the cast completes normally or is interrupted (Unit.CastInterrupted).
+        private async UniTaskVoid CastAsync(ISpellExecutor executor, SpellCastContext context, Unit ownerUnit)
+        {
+            if (ownerUnit == null || context.ResolvedCastTime <= 0f)
+            {
+                executor.Execute(context);
+                return;
+            }
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ownerUnit.GetCancellationTokenOnDestroy());
+            void OnInterrupted() => cts.Cancel();
+            ownerUnit.CastInterrupted += OnInterrupted;
+
+            var castModifierOwner = ModifierOwnerId.New();
+            ownerUnit.Modifiers.Add(new Modifier(ModifierType.MoveSpeed, ModifierOperation.Percent, -0.5f, castModifierOwner));
+            ownerUnit.StartCast();
+
+            bool completed = false;
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(context.ResolvedCastTime), cancellationToken: cts.Token);
+                completed = true;
+            }
+            catch (OperationCanceledException)
+            {
+                // Interrupted (e.g. death) — CastInterrupted already set IsCasting false.
+            }
+            finally
+            {
+                ownerUnit.CastInterrupted -= OnInterrupted;
+                ownerUnit.Modifiers.RemoveAll(castModifierOwner);
+            }
+
+            if (!completed)
+                return;
+
+            ownerUnit.EndCast();
+            executor.Execute(context);
         }
     }
 }

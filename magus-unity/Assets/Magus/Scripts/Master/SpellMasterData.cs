@@ -17,6 +17,7 @@ namespace magus.master
 
         public float BaseCastTime;
         public float BaseManaCost;
+        public float BaseDamage;
         public float BaseCooldown;
         public float BaseDuration;
         public float BaseSpeed;

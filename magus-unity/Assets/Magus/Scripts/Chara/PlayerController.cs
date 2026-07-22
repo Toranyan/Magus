@@ -12,6 +12,9 @@ namespace magus.chara
         [SerializeField] private GameCharaController _charaController;
         [SerializeField] private PlayerProgression _progression;
 
+        [Tooltip("Ground colliders hit-tested when aiming a manual-target (TargetPosition) spell.")]
+        [SerializeField] private LayerMask _groundLayerMask;
+
         public Unit Unit => _charaController.Unit;
         public PlayerProgression Progression => _progression;
 
@@ -24,6 +27,12 @@ namespace magus.chara
 		private UnitSpellInstance[] _preparedSpells = new UnitSpellInstance[3];
         private Unit _targetEnemy;
 
+        // Manual targeting (SpellTargetingType.TargetPosition): set by OnSpellInput,
+        // resolved by the next Attack (left-click) instead of casting immediately.
+        private bool _isAiming;
+        private UnitSpellInstance _aimingSpell;
+        private Vector3 _aimPosition;
+
         private void Awake()
         {
             _charaController.DeathAnimationFinished += OnDeathAnimationFinished;
@@ -32,8 +41,8 @@ namespace magus.chara
         public void Initialize()
         {
             InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Attack,     InputManager.InputPhase.Performed, OnAttackInput);
-            InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Ability_01, InputManager.InputPhase.Performed, (c) => OnSpellInput(0));
-            InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Ability_02, InputManager.InputPhase.Performed, (c) => OnSpellInput(1));
+            InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Ability_01, InputManager.InputPhase.Performed, (c) => OnSpellInput(1));
+            InputManager.Instance.AddActionCallback(InputManager.PlayerInputType.Ability_02, InputManager.InputPhase.Performed, (c) => OnSpellInput(2));
 
             // TODO: bind third spell slot when input action is available
             // TODO: load spells from run data / spell draft instead of hardcoding
@@ -74,6 +83,9 @@ namespace magus.chara
             UpdateTarget();
             TickSpells();
             AutocastSpells();
+
+            if (_isAiming)
+                UpdateAiming();
         }
 
         private void UpdateMoveVector()
@@ -84,7 +96,7 @@ namespace magus.chara
 
         private void UpdateTarget()
         {
-            _targetEnemy = FindClosestEnemy();
+            _targetEnemy = FindAutoTarget();
         }
 
         private void TickSpells()
@@ -95,6 +107,12 @@ namespace magus.chara
 
         private void OnAttackInput(InputAction.CallbackContext context)
         {
+            if (_isAiming)
+            {
+                ConfirmAiming();
+                return;
+            }
+
             // TODO: basic attack (non-spell)
         }
 
@@ -107,6 +125,12 @@ namespace magus.chara
                 return;
             }
 
+            if (spell.Info.TargetingType == SpellTargetingType.TargetPosition)
+            {
+                BeginAiming(spell);
+                return;
+            }
+
             TryCastSpell(spell);
         }
 
@@ -114,9 +138,48 @@ namespace magus.chara
         {
             foreach (var spell in _preparedSpells)
             {
-                if (spell != null && spell.Autocast)
+                // Manual (TargetPosition) spells need a click to place - can't autocast.
+                if (spell != null && spell.Autocast && spell.Info.TargetingType != SpellTargetingType.TargetPosition)
                     TryCastSpell(spell);
             }
+        }
+
+        // Enters aiming mode instead of casting immediately - the next Attack
+        // (left-click) confirms the raycast ground position and casts from there.
+        private void BeginAiming(UnitSpellInstance spell)
+        {
+            _aimingSpell = spell;
+            _isAiming = true;
+            _aimPosition = transform.position + transform.forward * spell.Info.Range;
+        }
+
+        private void UpdateAiming()
+        {
+            var screenPos = InputManager.Instance.PlayerInput.actions["MovePointer"].ReadValue<Vector2>();
+            var ray = Camera.main.ScreenPointToRay(screenPos);
+
+            if (Physics.Raycast(ray, out var hit, 200f, _groundLayerMask))
+            {
+                _aimPosition = hit.point;
+            }
+        }
+
+        private void ConfirmAiming()
+        {
+            _isAiming = false;
+            var spell = _aimingSpell;
+            _aimingSpell = null;
+
+            var context = new SpellCastContext
+            {
+                Info           = spell.Info,
+                Caster         = Unit,
+                Target         = null,
+                CastPosition   = transform.position,
+                TargetPosition = _aimPosition,
+            };
+
+            spell.TryCast(context);
         }
 
         private bool TryCastSpell(UnitSpellInstance spell)
@@ -137,13 +200,15 @@ namespace magus.chara
             return spell.TryCast(context);
         }
 
-        private Unit FindClosestEnemy()
+        // Automatic-mode spell targeting: highest ThreatRating in range, ties broken by distance.
+        private Unit FindAutoTarget()
         {
             var mask = LayerMask.GetMask("Character");
             var hits = Physics.OverlapSphere(transform.position, 30f, mask);
 
-            Unit closest = null;
-            float closestDistSqr = float.MaxValue;
+            Unit best = null;
+            float bestThreat = float.NegativeInfinity;
+            float bestDistSqr = float.MaxValue;
 
             foreach (var hit in hits)
             {
@@ -152,14 +217,19 @@ namespace magus.chara
                     continue;
 
                 float distSqr = (unit.transform.position - transform.position).sqrMagnitude;
-                if (distSqr < closestDistSqr)
+
+                bool isBetter = unit.ThreatRating > bestThreat ||
+                    (Mathf.Approximately(unit.ThreatRating, bestThreat) && distSqr < bestDistSqr);
+
+                if (isBetter)
                 {
-                    closest = unit;
-                    closestDistSqr = distSqr;
+                    best = unit;
+                    bestThreat = unit.ThreatRating;
+                    bestDistSqr = distSqr;
                 }
             }
 
-            return closest;
+            return best;
         }
 
         private void OnDeathAnimationFinished()

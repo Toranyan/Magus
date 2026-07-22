@@ -13,9 +13,9 @@ namespace magus.battle
         public Vector3 TargetPosition;
 
         // Info.CastTime resolved through the caster's Modifiers at the moment
-        // TryCast committed to this cast. No consumer reads this yet — casting is
-        // still instant (see the cast-time TODO in ProjectileSpellExecutor) — but
-        // executors that gate on cast time should read this instead of Info.CastTime.
+        // TryCast committed to this cast. UnitSpellInstance.CastAsync waits this long
+        // (if > 0) before invoking the executor - executors themselves always run
+        // post-cast-time and don't need to read this.
         public float ResolvedCastTime;
     }
 }
