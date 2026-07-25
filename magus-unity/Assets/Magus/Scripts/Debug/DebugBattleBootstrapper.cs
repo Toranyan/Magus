@@ -1,6 +1,7 @@
 using magus.battle;
 using UnityEngine;
 using magus.master;
+using magus.ui;
 using Cysharp.Threading.Tasks;
 
 
@@ -35,6 +36,16 @@ namespace magus.debug
 			playerController.SetSpell(0, unitSpell0);
 			playerController.SetSpell(1, unitSpell1);
 			playerController.SetSpell(2, unitSpell2);
+
+			var battleUIView = UIManager.Instance.GetView<UIBattleView>();
+			if (battleUIView != null)
+			{
+				for (int i = 0; i < 5; i++)
+					battleUIView.SetSpell(i, playerController.GetSpell(i));
+
+				battleUIView.SpellCastRequested += slot => playerController.CastSpellSlot(slot);
+				battleUIView.Open();
+			}
 
 			BattleController.Instance.InitRequired();
 

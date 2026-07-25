@@ -21,6 +21,15 @@ namespace magus.ui
         [SerializeField]
         private UIStateManager _stateManager;
 
+        /// <summary>
+        /// Views pre-instantiated in the scene (e.g. a test bootstrap scene) rather than
+        /// loaded from Addressables. Registered into the same dictionary GetOrCreateView/
+        /// GetOrLoadViewAsync use, keyed by each instance's concrete type, so callers don't
+        /// need to know whether a view came from here or was created through code.
+        /// </summary>
+        [SerializeField]
+        private List<UIViewBase> _startupViews;
+
         public Canvas MainCanvas => _mainCanvas;
 
         /// <summary>
@@ -32,8 +41,22 @@ namespace magus.ui
         /// </summary>
         private const string ViewAddressPrefix = "UI/Views/";
 
-        private readonly Dictionary<Type, UIViewBase> _views = new();
+		private readonly Dictionary<Type, UIViewBase> _views = new();
         private readonly Dictionary<Type, UniTask<UIViewBase>> _pendingLoads = new();
+
+        private void Awake()
+        {
+            if (_startupViews == null)
+                return;
+
+            foreach (var view in _startupViews)
+            {
+                if (view == null)
+                    continue;
+
+                _views[view.GetType()] = view;
+            }
+        }
 
         /// <summary>Returns the cached instance for this view type, instantiating it under the UI root on first use.</summary>
         public T GetOrCreateView<T>(T prefab) where T : UIViewBase

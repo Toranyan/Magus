@@ -15,6 +15,10 @@ namespace magus.battle
         public float CooldownRemaining { get; private set; }
         public bool IsReady => CooldownRemaining <= 0f;
 
+        // Cooldown duration resolved for the most recent cast (post-modifiers). Used
+        // by UI to turn CooldownRemaining into a fraction (e.g. for a radial mask).
+        public float LastCooldownDuration { get; private set; }
+
         // When true, the owner will keep attempting to cast this spell automatically
         // (e.g. every frame) instead of only on explicit input. TryCast already no-ops
         // while on cooldown, so it's safe to call repeatedly.
@@ -59,6 +63,7 @@ namespace magus.battle
             CooldownRemaining = ownerUnit != null
                 ? ownerUnit.Modifiers.Resolve(ModifierType.Cooldown, Info.Cooldown)
                 : Info.Cooldown;
+            LastCooldownDuration = CooldownRemaining;
 
             return true;
         }

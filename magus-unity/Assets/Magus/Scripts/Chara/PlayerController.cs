@@ -24,7 +24,9 @@ namespace magus.chara
         /// the death sequence has finished).</summary>
         public event Action Died;
 
-		private UnitSpellInstance[] _preparedSpells = new UnitSpellInstance[3];
+		// Slot 0 has no dedicated cast button (see BattleUIView) - slots 1-4 are bound
+		// to ability buttons/input.
+		private UnitSpellInstance[] _preparedSpells = new UnitSpellInstance[5];
         private Unit _targetEnemy;
 
         // Manual targeting (SpellTargetingType.TargetPosition): set by OnSpellInput,
@@ -65,6 +67,28 @@ namespace magus.chara
                 return;
             }
             _preparedSpells[index] = spell;
+        }
+
+        public UnitSpellInstance GetSpell(int index)
+        {
+            return (index >= 0 && index < _preparedSpells.Length) ? _preparedSpells[index] : null;
+        }
+
+        /// <summary>Attempts to cast the spell in the given slot. Used by BattleUIView's
+        /// spell buttons, as well as OnSpellInput for keyboard/gamepad-bound slots.</summary>
+        public bool CastSpellSlot(int index)
+        {
+            var spell = GetSpell(index);
+            if (spell == null)
+                return false;
+
+            if (spell.Info.TargetingType == SpellTargetingType.TargetPosition)
+            {
+                BeginAiming(spell);
+                return true;
+            }
+
+            return TryCastSpell(spell);
         }
 
         private void LoadDefaultSpells()
@@ -118,20 +142,13 @@ namespace magus.chara
 
         private void OnSpellInput(int index)
         {
-            var spell = _preparedSpells[index];
-            if (spell == null)
+            if (GetSpell(index) == null)
             {
                 Debug.LogWarning($"[PlayerController] No spell equipped in slot {index}");
                 return;
             }
 
-            if (spell.Info.TargetingType == SpellTargetingType.TargetPosition)
-            {
-                BeginAiming(spell);
-                return;
-            }
-
-            TryCastSpell(spell);
+            CastSpellSlot(index);
         }
 
         private void AutocastSpells()

@@ -10,6 +10,7 @@ namespace magus.battle
         public string Id { get; }
         public string Name { get; }
         public string Description { get; }
+        public string IconAssetKey { get; }
 
         public SpellType SpellType { get; }
         public SpellExecutorType ExecutorType { get; }
@@ -39,9 +40,10 @@ namespace magus.battle
                 return;
             }
 
-            Id          = data.Id;
-            Name        = data.Name;
-            Description = data.Description;
+            Id           = data.Id;
+            Name         = data.Name;
+            Description  = data.Description;
+            IconAssetKey = data.IconAssetKey;
 
             SpellType    = data.SpellType;
             ExecutorType = data.ExecutorType;

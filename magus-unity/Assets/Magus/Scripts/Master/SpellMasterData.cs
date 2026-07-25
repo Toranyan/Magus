@@ -8,6 +8,7 @@ namespace magus.master
     {
         public string Name;
         public string Description;
+        public string IconAssetKey;   // Addressables key for the spell's UI icon sprite
 
         public SpellType SpellType;
         public SpellExecutorType ExecutorType;
