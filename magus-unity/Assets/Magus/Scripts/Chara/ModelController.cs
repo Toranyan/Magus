@@ -39,10 +39,20 @@ namespace magus.chara
 		[Tooltip("What layers the character uses as ground")]
 		public LayerMask _groundLayers;
 
+		[Tooltip("Effect id spawned on death (e.g. an explosion). Left empty if the unit has none.")]
+		[SerializeField]
+		private string _deathEffectId;
+
+		private static readonly int DeathStateHash = Animator.StringToHash("Death");
+
 		private Vector3 _moveVector;
 		private Unit _unit;
 
 		public event Action DeathAnimationFinished;
+
+		/// <summary>Fired when the death sequence starts so external services (e.g. EffectManager)
+		/// can spawn the effect. Gameplay code should not directly spawn visual effects.</summary>
+		public event Action<string, Vector3> DeathEffectRequested;
 
 		public bool IsGrounded { get; private set; }
 
@@ -80,6 +90,7 @@ namespace magus.chara
 
 		public void Setup()
 		{
+			_animator.gameObject.SetActive(true);
 			_animator.enabled = true;
 			_characterController.enabled = true;
 		}
@@ -156,20 +167,32 @@ namespace magus.chara
 
 		public void StartDeathAnimation()
 		{
+			_characterController.enabled = false;
+
 			if (_ragdollOnDeath)
 			{
 				Ragdoll().Forget();
-			} 
-			else
+			}
+			else if (_animator.HasState(0, DeathStateHash))
 			{
 				DeathAnimation().Forget();
+			}
+			else
+			{
+				// No ragdoll and no death animation to play - just hide the model immediately.
+				_animator.gameObject.SetActive(false);
+				OnDeathAnimationFinished();
+			}
+
+			if (!string.IsNullOrEmpty(_deathEffectId))
+			{
+				DeathEffectRequested?.Invoke(_deathEffectId, transform.position);
 			}
 		}
 
 		public async UniTask Ragdoll()
 		{
 			_animator.enabled = false;
-			_characterController.enabled = false;
 			await UniTask.Delay(TimeSpan.FromSeconds(3));
 			OnDeathAnimationFinished();
 		}

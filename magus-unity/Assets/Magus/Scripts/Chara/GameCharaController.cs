@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using Cysharp.Threading.Tasks;
 using magus.battle;
 
 namespace magus.chara
@@ -40,6 +41,7 @@ namespace magus.chara
 
             _unit.Killed += HandleUnitKilled;
             _modelController.DeathAnimationFinished += OnModelDeathAnimationFinished;
+            _modelController.DeathEffectRequested += OnDeathEffectRequested;
 
             _obstacleLayerMask = LayerMask.GetMask("Character", "Map", "Doodad");
         }
@@ -145,6 +147,11 @@ namespace magus.chara
         private void OnModelDeathAnimationFinished()
         {
             DeathAnimationFinished?.Invoke();
+        }
+
+        private void OnDeathEffectRequested(string effectId, Vector3 position)
+        {
+            BattleController.Instance.EffectManager.CreateEffect(effectId, position).Forget();
         }
     }
 }
