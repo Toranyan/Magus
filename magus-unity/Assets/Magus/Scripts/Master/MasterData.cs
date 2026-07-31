@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -41,8 +40,8 @@ namespace magus.master
 				LoadMasterDataAsync<SpellMasterDataUnity, SpellMasterData>("MasterData/SpellMasterData", _masterDataDict[typeof(SpellMasterData)]),
 				LoadMasterDataAsync<AbilityMasterDataUnity, AbilityMasterData>("MasterData/AbilityMasterData", _masterDataDict[typeof(AbilityMasterData)]),
 				LoadMasterDataAsync<StatusEffectMasterDataUnity, StatusEffectMasterData>("MasterData/StatusEffect", _masterDataDict[typeof(StatusEffectMasterData)]),
-				LoadMasterDataAsync<UnitMasterDataUnity, UnitMasterData>("MasterData/UnitMasterData", _masterDataDict[typeof(UnitMasterData)]),
-				LoadMasterDataAsync<LevelProgressionMasterDataUnity, LevelProgressionMasterData>("MasterData/LevelProgressionMasterData", _masterDataDict[typeof(LevelProgressionMasterData)])
+				LoadMasterDataAsync<UnitMasterDataUnity, UnitMasterData>("MasterData/Unit", _masterDataDict[typeof(UnitMasterData)]),
+				LoadMasterDataAsync<LevelProgressionMasterDataUnity, LevelProgressionMasterData>("MasterData/LevelProgression", _masterDataDict[typeof(LevelProgressionMasterData)])
 			);
         }
 

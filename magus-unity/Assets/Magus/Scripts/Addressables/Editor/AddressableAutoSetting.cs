@@ -87,7 +87,10 @@ namespace magus.addressables
 
                     var label = string.IsNullOrEmpty(dirPart) ? "root" : dirPart;
                     // ensure label exists on the entry
-                    entry.SetLabel(label, true);
+                    // force:true registers the label in AddressableAssetSettings' global label table -
+                    // without it, SetLabel only takes effect for labels that already happen to be registered,
+                    // and unregistered labels get silently dropped from the built content catalog.
+                    entry.SetLabel(label, true, force: true);
 
                     processed++;
                 }

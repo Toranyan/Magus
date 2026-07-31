@@ -4,6 +4,8 @@ Temp/
 Logs/
 UserSettings/
 obj/
+Build/Output/
+Build/Logs/
 
 
 *.csproj

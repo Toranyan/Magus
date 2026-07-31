@@ -32,7 +32,7 @@ namespace magus.debug
 			var unitSpell0 = new UnitSpellInstance(new SpellInfo(spellMaster0), playerController.Unit);
 			var unitSpell1 = new UnitSpellInstance(new SpellInfo(spellMaster1), playerController.Unit);
 			var unitSpell2 = new UnitSpellInstance(new SpellInfo(spellMaster2), playerController.Unit);
-			//unitSpell0.Autocast = true;
+			unitSpell0.Autocast = true;
 			playerController.SetSpell(0, unitSpell0);
 			playerController.SetSpell(1, unitSpell1);
 			playerController.SetSpell(2, unitSpell2);
