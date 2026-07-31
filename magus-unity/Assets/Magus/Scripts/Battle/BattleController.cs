@@ -97,6 +97,11 @@ namespace magus.battle
 				spawner.ResetSpawner();
 			}
 
+			foreach (var spawner in _battle3DRoot.GetComponentsInChildren<UnitSpawner>())
+			{
+				spawner.ResetSpawner();
+			}
+
 			_playerController.transform.position = new Vector3(0, 1, 0); //TODO move to map start position
 			_playerController.Reset();
 

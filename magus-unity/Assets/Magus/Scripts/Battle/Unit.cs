@@ -1,4 +1,5 @@
 using System;
+using magus.master;
 using UnityEngine;
 
 namespace magus.battle
@@ -44,10 +45,16 @@ namespace magus.battle
         /// populate LootContext.Killer since Killed itself carries no payload.</summary>
         public IBattleEntity LastDamageSource { get; private set; }
 
+        private LevelProgressionTable _levelProgressionTable;
+
+        public int Level { get; private set; } = 1;
+        public int CurrentExperience { get; private set; }
+
         public event Action Killed;
         public event Action<DamageInfo> DamageReceived;
         public event Action<float> ManaChanged;
         public event Action CastInterrupted;
+        public event Action<int> LeveledUp;
 
         public void Setup()
         {
@@ -112,6 +119,48 @@ namespace magus.battle
         public void Kill()
         {
             CurrentHp = 0;
+        }
+
+        /// <summary>Assigns the table used to resolve XP thresholds for leveling up.</summary>
+        public void AssignLevelProgressionTable(LevelProgressionTable table)
+        {
+            _levelProgressionTable = table;
+        }
+
+        /// <summary>
+        /// Applies base stats from a UnitMasterData and resolves its LevelProgressionTable,
+        /// if any. Does not reset current HP/mana - call Setup() afterwards for that.
+        /// </summary>
+        public void ApplyMasterData(UnitMasterData masterData)
+        {
+            _maxHp = masterData.BaseMaxHp;
+            _maxMana = masterData.BaseMaxMana;
+            _threatRating = masterData.BaseThreatRating;
+
+            if (!string.IsNullOrEmpty(masterData.LevelProgressionTableId))
+            {
+                var progressionData = MasterData.GetMasterData<LevelProgressionMasterData>(masterData.LevelProgressionTableId);
+                if (progressionData != null)
+                    AssignLevelProgressionTable(new LevelProgressionTable(progressionData));
+            }
+        }
+
+        /// <summary>
+        /// Grants XP and levels up as many times as the table allows. No-op without an
+        /// assigned LevelProgressionTable, or once the table's max level is reached.
+        /// </summary>
+        public void AddExperience(int amount)
+        {
+            if (amount <= 0 || _levelProgressionTable == null) return;
+
+            CurrentExperience += amount;
+
+            while (_levelProgressionTable.TryGetXpToNextLevel(Level, out var xpToNextLevel) && CurrentExperience >= xpToNextLevel)
+            {
+                CurrentExperience -= xpToNextLevel;
+                Level++;
+                LeveledUp?.Invoke(Level);
+            }
         }
 
         private void OnKilled()

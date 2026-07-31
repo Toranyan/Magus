@@ -19,6 +19,8 @@ namespace magus.master
             [typeof(SpellMasterData)] = new(),
 			[typeof(AbilityMasterData)] = new(),
 			[typeof(StatusEffectMasterData)] = new(),
+			[typeof(UnitMasterData)] = new(),
+			[typeof(LevelProgressionMasterData)] = new(),
 		};
 
 		public static async UniTask InitializeAsync()
@@ -38,7 +40,9 @@ namespace magus.master
             await UniTask.WhenAll(
 				LoadMasterDataAsync<SpellMasterDataUnity, SpellMasterData>("MasterData/SpellMasterData", _masterDataDict[typeof(SpellMasterData)]),
 				LoadMasterDataAsync<AbilityMasterDataUnity, AbilityMasterData>("MasterData/AbilityMasterData", _masterDataDict[typeof(AbilityMasterData)]),
-				LoadMasterDataAsync<StatusEffectMasterDataUnity, StatusEffectMasterData>("MasterData/StatusEffect", _masterDataDict[typeof(StatusEffectMasterData)])
+				LoadMasterDataAsync<StatusEffectMasterDataUnity, StatusEffectMasterData>("MasterData/StatusEffect", _masterDataDict[typeof(StatusEffectMasterData)]),
+				LoadMasterDataAsync<UnitMasterDataUnity, UnitMasterData>("MasterData/UnitMasterData", _masterDataDict[typeof(UnitMasterData)]),
+				LoadMasterDataAsync<LevelProgressionMasterDataUnity, LevelProgressionMasterData>("MasterData/LevelProgressionMasterData", _masterDataDict[typeof(LevelProgressionMasterData)])
 			);
         }
 

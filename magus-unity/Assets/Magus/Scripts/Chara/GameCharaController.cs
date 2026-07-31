@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using Cysharp.Threading.Tasks;
 using magus.battle;
+using magus.master;
 
 namespace magus.chara
 {
@@ -52,6 +53,17 @@ namespace magus.chara
             _modelController.Setup();
             _modelController.SetOwner(_unit);
             _attack?.SetOwner(_unit);
+        }
+
+        /// <summary>
+        /// Applies base stats from a UnitMasterData to the Unit and ModelController.
+        /// Call before the GameObject is activated so the next Setup() (triggered by
+        /// OnEnable) resets HP/mana/move speed using the new values.
+        /// </summary>
+        public void ApplyMasterData(UnitMasterData masterData)
+        {
+            _unit.ApplyMasterData(masterData);
+            _modelController.SetBaseMoveSpeed(masterData.MoveSpeed);
         }
 
         public void SetMoveVector(Vector3 moveVec)

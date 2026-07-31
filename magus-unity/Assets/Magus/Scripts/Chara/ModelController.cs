@@ -76,6 +76,11 @@ namespace magus.chara
 			_unit = unit;
 		}
 
+		public void SetBaseMoveSpeed(float moveSpeed)
+		{
+			_moveSpeed = moveSpeed;
+		}
+
 		private void Awake()
 		{
 			Init();
