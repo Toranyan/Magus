@@ -11,6 +11,10 @@ namespace magus.ui
         // 4 button-cast spell slots. Kept in lockstep with PlayerController's slots.
         [SerializeField] private SpellCastIndicator[] _spellIndicators = new SpellCastIndicator[5];
 
+        [SerializeField] private UIExperienceIndicator _experienceIndicator;
+        [SerializeField] private UIHealthIndicator _healthIndicator;
+        [SerializeField] private UIStatusEffectList _statusEffectList;
+
         /// <summary>Raised with the slot index (1-4) when one of the button indicators is clicked.</summary>
         public event Action<int> SpellCastRequested;
 
@@ -32,6 +36,26 @@ namespace magus.ui
             }
 
             _spellIndicators[slot].SetSpell(spell);
+        }
+
+        public void SetHealth(float currentHp, float maxHp)
+        {
+            _healthIndicator.SetHealth(currentHp, maxHp);
+        }
+
+        public void SetExperience(int currentExperience)
+        {
+            _experienceIndicator.SetExperience(currentExperience);
+        }
+
+        public void AddStatusEffect(StatusEffectInstance instance)
+        {
+            _statusEffectList.AddStatusEffect(instance);
+        }
+
+        public void RemoveStatusEffect(StatusEffectInstance instance)
+        {
+            _statusEffectList.RemoveStatusEffect(instance);
         }
     }
 }
