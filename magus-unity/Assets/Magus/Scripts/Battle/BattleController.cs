@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using tora.singleton;
+using tora.save;
+using tora.eventbus;
 using magus.chara;
 using Cysharp.Threading.Tasks;
 using magus.master;
 using Cysharp.Threading.Tasks.Triggers;
 using tora.camera;
+using magus.story;
 
 namespace magus.battle
 {
@@ -18,8 +21,14 @@ namespace magus.battle
 	/// implemented so far; Play/Result don't exist yet (no win/loss condition, no
 	/// result screen) - add them here as further awaited steps when they're built,
 	/// and only reach for an FSM if a phase ends up needing real enter/exit gating.
+	///
+	/// Also an ISaveParticipant: remembers the last BattleInitOptions it was given so
+	/// Continue can resume the same map/player. Deliberately separate from StoryManager's
+	/// save data - replaying completed story nodes does not re-run their actions (so an
+	/// old StartBattleAction won't re-fire), so "what map am I in" has to be its own
+	/// piece of persisted state. See Docs/Design/StorySystem.md.
 	/// </summary>
-	public class BattleController : SingletonComponent<BattleController>
+	public class BattleController : SingletonComponent<BattleController>, ISaveParticipant
 	{
 		[SerializeField]
 		private PlayerController _playerController;
@@ -47,13 +56,57 @@ namespace magus.battle
 
 		public PickupSpawner PickupSpawner => _pickupSpawner;
 
+		public string SaveKey => "battle";
+
+		private BattleInitOptions _lastInitOptions;
+
+		private void Awake()
+		{
+			SaveSystem.Register(this);
+		}
+
+		private void OnDestroy()
+		{
+			SaveSystem.Unregister(this);
+		}
+
 		/// <summary>Full battle setup: loads the map and player from the given
 		/// addressable paths (or generates a random map, TODO, if MapAddress is empty),
 		/// then runs the same required setup as InitRequired(). Use this for real
 		/// gameplay.</summary>
 		public void Init(BattleInitOptions options)
 		{
+			_lastInitOptions = options;
 			InitAsync(options).Forget();
+		}
+
+		/// <summary>Re-enters Battle with whatever map/player was last saved, if any.
+		/// Called explicitly by Continue/Load Game - not automatically when save data is
+		/// loaded, since that also happens on every boot (StoryManager.Initialize), and
+		/// that must not skip the title screen. Returns false if there's nothing saved.</summary>
+		public bool TryResumeSavedBattle()
+		{
+			if (_lastInitOptions == null)
+			{
+				return false;
+			}
+
+			EventBus.Publish(new BattleStartRequestedEvent
+			{
+				MapAddress = _lastInitOptions.MapAddress,
+				PlayerPrefabAddress = _lastInitOptions.PlayerPrefabAddress
+			});
+			return true;
+		}
+
+		public string CaptureState()
+		{
+			return _lastInitOptions == null ? null : JsonUtility.ToJson(_lastInitOptions);
+		}
+
+		public void RestoreState(string json)
+		{
+			_lastInitOptions = string.IsNullOrEmpty(json) ? null : JsonUtility.FromJson<BattleInitOptions>(json);
 		}
 
 		private async UniTask InitAsync(BattleInitOptions options)
@@ -137,6 +190,7 @@ namespace magus.battle
 		{
 			var playerPrefab = await Addressables.LoadAssetAsync<GameObject>(playerPrefabAddress);
 			var playerInstance = Instantiate(playerPrefab, _battle3DRoot.transform);
+			playerInstance.transform.position = new Vector3(0, 1, 0); //TODO move to map start position, see Reset()
 			_playerController = playerInstance.GetComponent<PlayerController>();
 		}
 	}

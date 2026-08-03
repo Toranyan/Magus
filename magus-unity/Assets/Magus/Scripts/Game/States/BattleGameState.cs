@@ -1,3 +1,4 @@
+using UnityEngine;
 using tora.fsm;
 using magus.battle;
 
@@ -10,12 +11,16 @@ namespace magus.game
 	{
 		public override void OnEnter(IState prevState)
 		{
-			// TODO: source these from map/character selection once that UI exists
-			BattleController.Instance.Init(new BattleInitOptions
+			var options = GameManager.Instance.PendingBattleInitOptions;
+
+			if (options == null)
 			{
-				MapAddress = "Prefabs/Maps/map_test_01",
-				PlayerPrefabAddress = "Prefabs/Units/pc_test_01",
-			});
+				Debug.LogError("[BattleGameState] Entered Battle with no PendingBattleInitOptions set - " +
+					"expected a StartBattleAction (see StorySystem) to have run first via BattleStartRequestedEvent.");
+				return;
+			}
+
+			BattleController.Instance.Init(options);
 		}
 	}
 }

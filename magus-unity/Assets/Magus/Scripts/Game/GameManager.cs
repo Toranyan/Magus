@@ -1,4 +1,7 @@
 using tora.singleton;
+using tora.eventbus;
+using magus.battle;
+using magus.story;
 
 namespace magus.game
 {
@@ -10,6 +13,30 @@ namespace magus.game
 		private readonly GameFSM _fsm = new();
 
 		public GameState CurrentState { get; private set; }
+
+		/// <summary>Set by StartBattleAction via BattleStartRequestedEvent, read by
+		/// BattleGameState.OnEnter() instead of hardcoding what map/player to load.</summary>
+		public BattleInitOptions PendingBattleInitOptions { get; private set; }
+
+		private void Awake()
+		{
+			EventBus.Subscribe<BattleStartRequestedEvent>(OnBattleStartRequested);
+		}
+
+		private void OnDestroy()
+		{
+			EventBus.Unsubscribe<BattleStartRequestedEvent>(OnBattleStartRequested);
+		}
+
+		private void OnBattleStartRequested(BattleStartRequestedEvent e)
+		{
+			PendingBattleInitOptions = new BattleInitOptions
+			{
+				MapAddress = e.MapAddress,
+				PlayerPrefabAddress = e.PlayerPrefabAddress
+			};
+			ChangeState(GameState.Battle);
+		}
 
 		public void ChangeState(GameState state)
 		{

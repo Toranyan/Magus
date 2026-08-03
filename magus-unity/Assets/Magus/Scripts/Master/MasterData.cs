@@ -20,6 +20,7 @@ namespace magus.master
 			[typeof(StatusEffectMasterData)] = new(),
 			[typeof(UnitMasterData)] = new(),
 			[typeof(LevelProgressionMasterData)] = new(),
+			[typeof(CharacterMasterData)] = new(),
 		};
 
 		public static async UniTask InitializeAsync()
@@ -41,7 +42,8 @@ namespace magus.master
 				LoadMasterDataAsync<AbilityMasterDataUnity, AbilityMasterData>("MasterData/AbilityMasterData", _masterDataDict[typeof(AbilityMasterData)]),
 				LoadMasterDataAsync<StatusEffectMasterDataUnity, StatusEffectMasterData>("MasterData/StatusEffect", _masterDataDict[typeof(StatusEffectMasterData)]),
 				LoadMasterDataAsync<UnitMasterDataUnity, UnitMasterData>("MasterData/Unit", _masterDataDict[typeof(UnitMasterData)]),
-				LoadMasterDataAsync<LevelProgressionMasterDataUnity, LevelProgressionMasterData>("MasterData/LevelProgression", _masterDataDict[typeof(LevelProgressionMasterData)])
+				LoadMasterDataAsync<LevelProgressionMasterDataUnity, LevelProgressionMasterData>("MasterData/LevelProgression", _masterDataDict[typeof(LevelProgressionMasterData)]),
+				LoadMasterDataAsync<CharacterMasterDataUnity, CharacterMasterData>("MasterData/Character", _masterDataDict[typeof(CharacterMasterData)])
 			);
         }
 
