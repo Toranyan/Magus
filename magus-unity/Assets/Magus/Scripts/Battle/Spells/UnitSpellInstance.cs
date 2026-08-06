@@ -41,7 +41,7 @@ namespace magus.battle
         {
             if (!IsReady)
             {
-                Debug.Log($"[UnitSpellInstance] {Info.Name} is on cooldown ({CooldownRemaining:F1}s remaining)");
+                //Debug.Log($"[UnitSpellInstance] {Info.Name} is on cooldown ({CooldownRemaining:F1}s remaining)");
                 return false;
             }
 
