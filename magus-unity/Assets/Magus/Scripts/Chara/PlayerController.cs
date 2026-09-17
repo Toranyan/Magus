@@ -18,6 +18,13 @@ namespace magus.chara
         public Unit Unit => _charaController.Unit;
         public PlayerProgression Progression => _progression;
 
+        /// <summary>False while a cutscene (or similar) has taken control - see
+        /// CutsceneManager. Stops movement/targeting/casting input from being processed,
+        /// both the polled kind (Update) and the callback kind (OnAttackInput/OnSpellInput),
+        /// so a Timeline Animation Track can drive the same Animator without the player's
+        /// own control fighting it.</summary>
+        public bool InputEnabled { get; private set; } = true;
+
         /// <summary>Fires once the death animation/ragdoll has fully played out and
         /// the player object has been deactivated - the correct point to reset and
         /// respawn, rather than reacting to Unit.Killed directly (which fires before
@@ -57,6 +64,17 @@ namespace magus.chara
 		{
 			gameObject.SetActive(true);
 			_charaController.Setup();
+		}
+
+		public void SetInputEnabled(bool enabled)
+		{
+			InputEnabled = enabled;
+
+			if (!enabled)
+			{
+				_isAiming = false;
+				_charaController.SetMoveVector(Vector3.zero);
+			}
 		}
 
 		public void SetSpell(int index, UnitSpellInstance spell)
@@ -102,7 +120,7 @@ namespace magus.chara
 
         private void Update()
         {
-            if (!Unit.IsAlive) return;
+            if (!Unit.IsAlive || !InputEnabled) return;
             UpdateMoveVector();
             UpdateTarget();
             TickSpells();
@@ -131,6 +149,8 @@ namespace magus.chara
 
         private void OnAttackInput(InputAction.CallbackContext context)
         {
+            if (!InputEnabled) return;
+
             if (_isAiming)
             {
                 ConfirmAiming();
@@ -142,6 +162,8 @@ namespace magus.chara
 
         private void OnSpellInput(int index)
         {
+            if (!InputEnabled) return;
+
             if (GetSpell(index) == null)
             {
                 Debug.LogWarning($"[PlayerController] No spell equipped in slot {index}");

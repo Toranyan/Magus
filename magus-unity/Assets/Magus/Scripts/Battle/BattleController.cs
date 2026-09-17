@@ -11,6 +11,7 @@ using magus.master;
 using Cysharp.Threading.Tasks.Triggers;
 using tora.camera;
 using magus.story;
+using magus.cutscene;
 
 namespace magus.battle
 {
@@ -192,6 +193,8 @@ namespace magus.battle
 			var playerInstance = Instantiate(playerPrefab, _battle3DRoot.transform);
 			playerInstance.transform.position = new Vector3(0, 1, 0); //TODO move to map start position, see Reset()
 			_playerController = playerInstance.GetComponent<PlayerController>();
+
+			CutsceneManager.Instance.RegisterActor(CutsceneManager.PlayerActorName, playerInstance);
 		}
 	}
 

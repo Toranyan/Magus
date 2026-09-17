@@ -34,8 +34,11 @@ Gameplay -> EventBus -> StoryManager -> StoryGraph
     DialogueChoiceMadeEvent    v
                         NarrativeEventBus
                   /      |       \      \
-           Dialogue  Timeline  Popups  GameManager (game flow, e.g. BattleStartRequestedEvent)
+           Dialogue  Cutscene  Popups  GameManager (game flow, e.g. BattleStartRequestedEvent)
+        (DialogueManager) (CutsceneManager)
 ```
+
+"Timeline" from earlier drafts is `CutsceneManager` (`Magus/Scripts/Cutscene/`) — a thin trigger around Unity's own Timeline package (already installed), not a custom sequencer. See [Actions](#actions)/[Narrative Events](#narrative-events). "Popups" still has no consumer/action — nothing requests one yet.
 
 ## Core Components
 
@@ -74,7 +77,7 @@ Implement `IStoryCondition`. Stored as `[SerializeReference] List<IStoryConditio
 ### Actions
 Implement `IStoryAction`. Stored as `[SerializeReference] List<IStoryAction>` on `StoryNode`, same mechanism as Conditions.
 
-- Implemented: `SetFlagAction`, `SetVariableAction`, `LogMessageAction` (debug/POC only — prints a message to the console, not part of the original design), `StartBattleAction` (publishes `BattleStartRequestedEvent` with a map/player Addressables path), `StartDialogueAction` (publishes `ConversationRequestedEvent` with a `DialogueAsset` Addressables path — see [Narrative Events](#narrative-events)). `StartDialogueAction` supersedes the originally-planned `UnlockConversation` name/shape — it directly requests playback rather than just marking a conversation available for some other system to trigger later, mirroring `StartBattleAction`
+- Implemented: `SetFlagAction`, `SetVariableAction`, `LogMessageAction` (debug/POC only — prints a message to the console, not part of the original design), `StartBattleAction` (publishes `BattleStartRequestedEvent` with a map/player Addressables path), `StartDialogueAction` (publishes `ConversationRequestedEvent` with a `DialogueAsset` Addressables path), `StartTimelineAction` (publishes `TimelineRequestedEvent` with a cutscene prefab's Addressables path — see [Narrative Events](#narrative-events)). `StartDialogueAction`/`StartTimelineAction` supersede the originally-planned `UnlockConversation`-style naming/shape — they directly request playback rather than just marking something available for some other system to trigger later, all three mirroring the same pattern
 - Not implemented — depend on systems/content that don't exist yet: `UnlockEnding` (ending content)
 
 ### Blackboard
@@ -92,7 +95,8 @@ Published on [EventBus](EventBus.md) after actions run.
 - Implemented: `ChapterAdvancedEvent`, published by `StoryManager.AdvanceChapter(chapterId)`.
   - `BattleStartRequestedEvent`, published by `StartBattleAction`. Not consumed by a presentation system — `GameManager` subscribes, stores the options on `PendingBattleInitOptions`, and calls `ChangeState(GameState.Battle)`. `BattleGameState.OnEnter()` reads those options instead of hardcoding a map/player, so entering Battle is entirely story-graph-driven. `UITitle`'s New Game/Continue buttons only reset/load story progress and never call `ChangeState` themselves — doing both would enter Battle twice.
   - `ConversationRequestedEvent`, published by `StartDialogueAction`. `DialogueManager` subscribes directly and calls `Play(e.GraphAddress)` — no `GameManager`-style intermediary needed here, since playing a conversation doesn't change `GameState`.
-- Not implemented — no action produces these yet, since the action that would (`UnlockEnding`) depends on ending content that doesn't exist: `TimelineRequested`, `EndingUnlocked`
+  - `TimelineRequestedEvent`, published by `StartTimelineAction`. `CutsceneManager` subscribes directly and calls `Play(e.CutsceneAddress)` — same reasoning as `ConversationRequestedEvent`, no `GameState` change involved. The cutscene address points at a self-contained Addressable prefab (`PlayableDirector` + `TimelineAsset` + whatever actors/camera the timeline tracks bind to) — `CutsceneManager` just instantiates it and calls `Play()`. Real limitation: since the prefab is freshly instantiated, its tracks can only bind to actors spawned as part of that same prefab, not to already-live persistent objects (e.g. the actual player character) — binding a cutscene to existing scene objects needs a resolution step that isn't built (see [Future Extensions](#future-extensions)).
+- Not implemented — no action produces this yet, since the action that would (`UnlockEnding`) depends on ending content that doesn't exist: `EndingUnlocked`
 
 Presentation systems subscribe independently.
 
@@ -121,7 +125,7 @@ Implemented as `GraphValidator<StoryNode>` per [GraphFramework — Validation](G
 - Cycles
 - Orphans
 
-Missing assets is not yet checked, even though `StartBattleAction`/`StartDialogueAction` now hold Addressables path strings that could be validated (e.g. flag a typo'd `GraphAddress` at author time instead of failing at runtime) — see [Future Extensions](#future-extensions).
+Missing assets is not yet checked, even though `StartBattleAction`/`StartDialogueAction`/`StartTimelineAction` now hold Addressables path strings that could be validated (e.g. flag a typo'd address at author time instead of failing at runtime) — see [Future Extensions](#future-extensions).
 
 ## Design Principles
 - Data-driven
@@ -134,8 +138,10 @@ Missing assets is not yet checked, even though `StartBattleAction`/`StartDialogu
 ## Future Extensions
 - Campaign/Chapter-scoped Blackboard, once the narrative content plan defines what a Chapter and a Campaign actually are (see [Blackboard](#blackboard))
 - Full graph editor feature set (search, comments, minimap, runtime highlighting, undo/redo polish, copy/paste)
-- Missing-asset validation for `StartBattleAction`/`StartDialogueAction`'s Addressables path fields (see [Validation](#validation))
-- `ItemCondition`, `BossKilledCondition`, `ConversationSeenCondition`, `UnlockEnding` action, `TimelineRequested`/`EndingUnlocked` events, and `SeenConversations` save data — all gated on the systems/content they depend on (inventory, a combat kill event on EventBus, ending content, `DialogueManager` reporting completed conversations) existing
+- Missing-asset validation for `StartBattleAction`/`StartDialogueAction`/`StartTimelineAction`'s Addressables path fields (see [Validation](#validation))
+- Binding a `CutsceneManager` timeline to already-live scene objects (e.g. the real player character), not just actors spawned inside the cutscene's own prefab — see [Narrative Events](#narrative-events)
+- A `PopupRequestedEvent`/`StartPopupAction` pair — "Popups" has been in the architecture diagram since the first draft but nothing has ever requested one
+- `ItemCondition`, `BossKilledCondition`, `ConversationSeenCondition`, `UnlockEnding` action, `EndingUnlocked` event, and `SeenConversations` save data — all gated on the systems/content they depend on (inventory, a combat kill event on EventBus, ending content, `DialogueManager` reporting completed conversations) existing
 - A gameplay-published `StoryEvent` — `StoryManager` already subscribes on EventBus, but nothing in gameplay code publishes one yet
 - A `StoryManager` GameObject/`StoryGraph` reference wired into an actual scene — not done as part of this pass
 - Multiple save slots (tracked at the [SaveSystem](SaveSystem.md#future-extensions) level, not here)

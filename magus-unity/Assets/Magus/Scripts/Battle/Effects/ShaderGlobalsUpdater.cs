@@ -21,7 +21,6 @@ namespace magus.battle
         {
             if (_player != null)
             {
-				Debug.Log(_player.position);
 				Shader.SetGlobalVector(_playerPosID, _player.position);
 			}
 		}
