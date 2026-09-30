@@ -16,5 +16,10 @@ namespace magus.battle
 
 		/// <summary>Addressable path to the player character prefab, e.g. "Prefabs/Units/pc_test_01".</summary>
 		public string PlayerPrefabAddress;
+
+		/// <summary>Which SpawnPoint (by Id) on the map to place the player at. Null/empty
+		/// falls back to a SpawnPoint with Id "default" - see SpawnPoint,
+		/// BattleController.FindSpawnPosition.</summary>
+		public string SpawnPointId;
 	}
 }

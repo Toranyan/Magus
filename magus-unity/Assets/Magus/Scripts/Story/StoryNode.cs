@@ -31,12 +31,32 @@ namespace magus.story
             return true;
         }
 
+        /// <summary>Runs every plain (non-async) action. Async actions are skipped here -
+        /// StoryManager runs those separately, sequentially, via GetAsyncActions(), since
+        /// they block the node's completion until they signal done.</summary>
         public void ExecuteActions(StoryBlackboard blackboard)
         {
             foreach (var action in Actions)
             {
+                if (action is IAsyncStoryAction)
+                {
+                    continue;
+                }
                 action?.Execute(blackboard);
             }
+        }
+
+        public List<IAsyncStoryAction> GetAsyncActions()
+        {
+            var result = new List<IAsyncStoryAction>();
+            foreach (var action in Actions)
+            {
+                if (action is IAsyncStoryAction asyncAction)
+                {
+                    result.Add(asyncAction);
+                }
+            }
+            return result;
         }
     }
 }

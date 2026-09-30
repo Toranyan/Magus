@@ -191,7 +191,18 @@ namespace magus.dialogue
             Sprite portrait = null;
             if (!string.IsNullOrEmpty(character.PortraitAssetKey))
             {
-                portrait = await Addressables.LoadAssetAsync<Sprite>(character.PortraitAssetKey);
+                // A bad/missing portrait (e.g. an image not imported as a Sprite) throwing
+                // here used to abort PresentTextEntryAsync entirely, leaving the body text
+                // stuck on its placeholder - the actual bug behind this fix. Text should
+                // never be held hostage by a broken portrait.
+                try
+                {
+                    portrait = await Addressables.LoadAssetAsync<Sprite>(character.PortraitAssetKey);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[DialogueManager] Failed to load portrait '{character.PortraitAssetKey}' for '{characterId}': {ex.Message}");
+                }
             }
 
             view.SetSpeaker(character.DisplayName, portrait);

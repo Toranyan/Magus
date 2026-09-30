@@ -33,7 +33,8 @@ namespace magus.game
 			PendingBattleInitOptions = new BattleInitOptions
 			{
 				MapAddress = e.MapAddress,
-				PlayerPrefabAddress = e.PlayerPrefabAddress
+				PlayerPrefabAddress = e.PlayerPrefabAddress,
+				SpawnPointId = e.SpawnPointId
 			};
 			ChangeState(GameState.Battle);
 		}

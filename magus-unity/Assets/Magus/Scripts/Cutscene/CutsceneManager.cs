@@ -9,6 +9,7 @@ using tora.singleton;
 using tora.eventbus;
 using magus.story;
 using magus.chara;
+using magus.dialogue;
 
 namespace magus.cutscene
 {
@@ -34,6 +35,9 @@ namespace magus.cutscene
 
         private PlayableDirector _activeDirector;
         private GameObject _activeInstance;
+        private string _activeCutsceneAddress;
+        private bool _timelineStopped;
+        private bool _waitingForDialogue;
 
         public bool IsPlaying => _activeDirector != null && _activeDirector.state == PlayState.Playing;
 
@@ -85,6 +89,10 @@ namespace magus.cutscene
                 return;
             }
 
+            _activeCutsceneAddress = cutsceneAddress;
+            _timelineStopped = false;
+            _waitingForDialogue = false;
+
             _activeInstance = _cutsceneRoot != null ? Instantiate(prefab, _cutsceneRoot) : Instantiate(prefab);
             _activeDirector = _activeInstance.GetComponent<PlayableDirector>();
 
@@ -93,6 +101,7 @@ namespace magus.cutscene
                 Debug.LogError($"[CutsceneManager] Cutscene prefab '{cutsceneAddress}' has no PlayableDirector.");
                 Destroy(_activeInstance);
                 _activeInstance = null;
+                _activeCutsceneAddress = null;
                 return;
             }
 
@@ -101,6 +110,28 @@ namespace magus.cutscene
 
             _activeDirector.stopped += OnDirectorStopped;
             _activeDirector.Play();
+        }
+
+        /// <summary>DialogueCutsceneSignal calls this instead of DialogueManager.Play()
+        /// directly, so a dialogue started mid-cutscene is tracked here too - the cutscene
+        /// isn't considered finished (CutsceneFinishedEvent doesn't fire) until this
+        /// dialogue ends as well, even if the Timeline itself has already stopped.</summary>
+        public void PlayDialogueDuringCutscene(string dialogueAddress)
+        {
+            if (!_waitingForDialogue)
+            {
+                _waitingForDialogue = true;
+                DialogueManager.Instance.Ended += OnCutsceneDialogueEnded;
+            }
+
+            DialogueManager.Instance.Play(dialogueAddress);
+        }
+
+        private void OnCutsceneDialogueEnded()
+        {
+            DialogueManager.Instance.Ended -= OnCutsceneDialogueEnded;
+            _waitingForDialogue = false;
+            TryFinishCutscene();
         }
 
         /// <summary>Binds any track whose name matches a registered actor to that actor's
@@ -161,13 +192,38 @@ namespace magus.cutscene
         private void OnDirectorStopped(PlayableDirector director)
         {
             director.stopped -= OnDirectorStopped;
-            Stop();
-            Ended?.Invoke();
+            _timelineStopped = true;
+            TryFinishCutscene();
         }
 
+        /// <summary>Only actually finishes once the Timeline has stopped AND (if a
+        /// DialogueCutsceneSignal fired during it) that dialogue has also ended - order
+        /// doesn't matter, whichever finishes last calls this and it proceeds.</summary>
+        private void TryFinishCutscene()
+        {
+            if (!_timelineStopped || _waitingForDialogue)
+            {
+                return;
+            }
+
+            Stop();
+        }
+
+        /// <summary>Stops immediately, whether the cutscene finished naturally or is being
+        /// interrupted (including by a new Play() call). Always publishes
+        /// CutsceneFinishedEvent if one was active, so a StoryNode's StartTimelineAction
+        /// waiting on it never gets stuck, even on a manual/external Stop().</summary>
         public void Stop()
         {
+            var finishedAddress = _activeCutsceneAddress;
+
             SetPlayerInputEnabled(true);
+
+            if (_waitingForDialogue)
+            {
+                DialogueManager.Instance.Ended -= OnCutsceneDialogueEnded;
+                _waitingForDialogue = false;
+            }
 
             if (_activeDirector != null)
             {
@@ -182,6 +238,14 @@ namespace magus.cutscene
 
             _activeDirector = null;
             _activeInstance = null;
+            _activeCutsceneAddress = null;
+            _timelineStopped = false;
+
+            if (finishedAddress != null)
+            {
+                EventBus.Publish(new CutsceneFinishedEvent { CutsceneAddress = finishedAddress });
+                Ended?.Invoke();
+            }
         }
 
         private void SetPlayerInputEnabled(bool enabled)

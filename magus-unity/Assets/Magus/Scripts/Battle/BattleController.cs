@@ -49,6 +49,9 @@ namespace magus.battle
 		[SerializeField]
 		private GameObject _battle3DRoot;
 
+		[SerializeField]
+		private ShaderGlobalsUpdater _shaderGlobalsUpdater;
+
 		public PlayerController PlayerController => _playerController;
 
 		public ProjectileManager ProjectileManager => _projectileManager;
@@ -59,7 +62,10 @@ namespace magus.battle
 
 		public string SaveKey => "battle";
 
+		private const string DefaultSpawnPointId = "default";
+
 		private BattleInitOptions _lastInitOptions;
+		private GameObject _mapInstance;
 
 		private void Awake()
 		{
@@ -135,6 +141,15 @@ namespace magus.battle
 
 			_followCamera.FollowTarget = _playerController.gameObject;
 			_followCamera.LookTarget = _playerController.gameObject;
+
+			if (_shaderGlobalsUpdater != null)
+			{
+				_shaderGlobalsUpdater.SetPlayer(_playerController.transform);
+			}
+
+			// Common completion point for both Init() and the direct InitRequired() dev
+			// path - see StartBattleAction, which waits for this before its node completes.
+			EventBus.Publish(new BattleReadyEvent());
 		}
 
 		/// <summary>Clears all dynamic battle content - active projectiles, effects,
@@ -156,7 +171,7 @@ namespace magus.battle
 				spawner.ResetSpawner();
 			}
 
-			_playerController.transform.position = new Vector3(0, 1, 0); //TODO move to map start position
+			_playerController.transform.position = FindSpawnPosition();
 			_playerController.Reset();
 
 		}
@@ -178,7 +193,7 @@ namespace magus.battle
 			}
 
 			var mapPrefab = await Addressables.LoadAssetAsync<GameObject>(mapAddress);
-			Instantiate(mapPrefab, _battle3DRoot.transform);
+			_mapInstance = Instantiate(mapPrefab, _battle3DRoot.transform);
 		}
 
 		private void GenerateRandomMap()
@@ -191,10 +206,56 @@ namespace magus.battle
 		{
 			var playerPrefab = await Addressables.LoadAssetAsync<GameObject>(playerPrefabAddress);
 			var playerInstance = Instantiate(playerPrefab, _battle3DRoot.transform);
-			playerInstance.transform.position = new Vector3(0, 1, 0); //TODO move to map start position, see Reset()
+			playerInstance.transform.position = FindSpawnPosition();
 			_playerController = playerInstance.GetComponent<PlayerController>();
 
 			CutsceneManager.Instance.RegisterActor(CutsceneManager.PlayerActorName, playerInstance);
+		}
+
+		/// <summary>Resolves to a SpawnPoint on the current map matching
+		/// _lastInitOptions.SpawnPointId (set per-battle by StartBattleAction, so different
+		/// StoryNodes can land the player in different spots on the same map). Falls back to
+		/// a SpawnPoint with Id "default" if the requested one isn't found, then to whatever
+		/// SpawnPoint exists at all, then to the map's own root position (better than a
+		/// hardcoded world-space guess - map roots aren't necessarily near world origin,
+		/// map_test_02's is at local (-427, 0, -424) - but still not guaranteed walkable),
+		/// logging a warning at each fallback step so a missing spawn point is an obvious
+		/// cause, not a silent fall through the map.</summary>
+		private Vector3 FindSpawnPosition()
+		{
+			if (_mapInstance == null)
+			{
+				return new Vector3(0, 1, 0); // no map instance (random map path) - TODO once procedural maps exist
+			}
+
+			var requestedId = string.IsNullOrEmpty(_lastInitOptions?.SpawnPointId) ? DefaultSpawnPointId : _lastInitOptions.SpawnPointId;
+
+			SpawnPoint anySpawnPoint = null;
+			SpawnPoint defaultSpawnPoint = null;
+
+			foreach (var spawnPoint in _mapInstance.GetComponentsInChildren<SpawnPoint>(true))
+			{
+				if (spawnPoint.Id == requestedId)
+				{
+					return spawnPoint.transform.position;
+				}
+
+				anySpawnPoint ??= spawnPoint;
+				if (spawnPoint.Id == DefaultSpawnPointId)
+				{
+					defaultSpawnPoint = spawnPoint;
+				}
+			}
+
+			var fallback = defaultSpawnPoint != null ? defaultSpawnPoint : anySpawnPoint;
+			if (fallback != null)
+			{
+				Debug.LogWarning($"[BattleController] Map '{_mapInstance.name}' has no SpawnPoint with Id '{requestedId}' - using '{fallback.Id}' instead.");
+				return fallback.transform.position;
+			}
+
+			Debug.LogWarning($"[BattleController] Map '{_mapInstance.name}' has no SpawnPoints at all - falling back to the map's root position, which may not be walkable. Add a SpawnPoint component to a GameObject in the map prefab.");
+			return _mapInstance.transform.position + Vector3.up;
 		}
 	}
 

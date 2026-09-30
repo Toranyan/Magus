@@ -7,5 +7,6 @@ namespace magus.story
     {
         public string MapAddress;
         public string PlayerPrefabAddress;
+        public string SpawnPointId;
     }
 }

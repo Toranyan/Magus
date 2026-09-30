@@ -89,7 +89,7 @@ Text fields (`DialogueEntry.Text`, `DialogueChoiceOption.Text`) are `UnityEngine
 ## UI
 v1: Name, Portrait, Text, Choices — implemented as `UIDialogueView` (`Magus/Scripts/UI/Dialogue/`), a dumb view following `UIBattleView`'s pattern: `DialogueManager` calls its setters (`SetSpeaker`, `SetBodyText`, `ShowChoices`, …) and subscribes to its `AdvanceRequested`/`ChoiceSelected` events, same division of responsibility as `UIBattleView`/`CastMenuPresenter` elsewhere in the project. Deferred: History, Auto, Skip. Unaffected by the graph → linear-list reversal — the view never knew about nodes/entries, only strings and sprites.
 
-**Needs manual Editor setup, not done as part of this pass**: a `UIDialogueView.prefab` under `Assets/Magus/Addressables/UI/Views/` (matching `UIManager`'s addressing convention — address = `UI/Views/UIDialogueView`), with the view script's `_nameText`/`_portraitImage`/`_bodyText`/`_advanceButton`/`_choicesContainer`/`_choiceButtonPrefab` fields wired to real UI elements, and marked Addressable. No dialogue can actually be seen on screen until that prefab exists.
+`UIDialogueView.prefab` (under `Assets/Magus/Addressables/UI/Views/`, address `UI/Views/UIDialogueView`) is built and confirmed working end to end. One thing worth remembering for future Character portraits: a portrait image must have its Texture Type set to **Sprite (2D and UI)** (needs the 2D Sprite package) before `Addressables.LoadAssetAsync<Sprite>` can load it — a portrait that fails this used to throw inside `ApplySpeakerAsync` and silently abort the rest of `PresentTextEntryAsync`, leaving the body text stuck on its placeholder. That's now caught and logged as a warning instead (`DialogueManager.ApplySpeakerAsync`), so a bad portrait can't block the text again, but the import setting is still required for the portrait itself to show.
 
 ## Save Data
 `DialogueManager` registers with [SaveSystem](SaveSystem.md#participant-api) as an `ISaveParticipant`:
@@ -114,8 +114,8 @@ None. `GraphValidator` doesn't apply — there's no graph to validate anymore. A
 - Themeable — not defined further yet; likely just Character `ThemeColor` driving UI accents once Character Assets grow that far (see [Future Extensions](#future-extensions))
 
 ## Future Extensions
-- `UIDialogueView.prefab` — needs to be authored in the Editor before any of this is visible on screen; see [UI](#ui)
 - Deciding whether/how to resume a mid-conversation save at all, then wiring `DialogueManager.RestoreState` to act on it; see [Save Data](#save-data)
+- Disabling player input while dialogue is playing, not just during cutscenes — tracked in [StorySystem's Future Extensions](StorySystem.md#future-extensions)
 - Camera, Music, Background, Wait entry kinds; reading `StoryBlackboard` from within a conversation (see [Deferred](#deferred-to-a-later-pass))
 - Character Expressions, ThemeColor, Voice
 - History, Auto, Skip UI

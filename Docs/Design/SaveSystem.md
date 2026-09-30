@@ -2,9 +2,7 @@
 
 ## Purpose
 
-General-purpose persistence for player progress. Built to unblock [StorySystem](StorySystem.md) (completed nodes, variables, flags, current chapter, seen conversations), but scoped as shared infrastructure so other systems (`PlayerProgression`'s experience/currency totals, unlocks, settings) register with it later instead of each inventing their own file I/O.
-
-No save/load of any kind currently exists in the project — this is net-new.
+General-purpose persistence for player progress. Built to unblock [StorySystem](StorySystem.md) (completed nodes, variables, flags, current chapter, seen conversations), but scoped as shared infrastructure so other systems register with it instead of each inventing their own file I/O — implemented and in use by `StoryManager`, `BattleController`, and `DialogueManager`; see [Dependents](#dependents). `PlayerProgression`'s experience/currency totals and unlocks/settings are still candidates for later, not yet registered.
 
 ## Responsibilities
 
@@ -15,7 +13,7 @@ No save/load of any kind currently exists in the project — this is net-new.
 ## Does NOT
 
 - Know what any participant's data means — it stores and returns opaque blobs
-- Auto-save on a timer or on scene transitions (callers decide when to save)
+- Auto-save on a timer or on scene transitions — callers decide when to save. In practice there's currently exactly one caller: `CheckpointManager` (`magus.checkpoint`) calls `Save()` in reaction to a StoryNode's `CheckpointAction`. The game saves at checkpoints and nowhere else — see [StorySystem's Narrative Events](StorySystem.md#narrative-events)
 - Support cloud sync or multiple save slots in v1
 
 ## Location
@@ -56,6 +54,7 @@ public interface ISaveParticipant
 - A participant defines its own `[Serializable]` data class privately — `SaveSystem` never needs to know its shape.
 - `StoryManager` is the first `ISaveParticipant`, holding completed node Ids, Blackboard variables, story flags, and current chapter (see [StorySystem's Save Data](StorySystem.md#save-data)).
 - `BattleController` (`magus.battle`) is the second, holding the last `BattleInitOptions` (map/player Addressables paths) it was given. Deliberately separate from `StoryManager`'s data: restoring story progress does not re-run already-completed nodes' actions, so "what map am I currently in" can't be reconstructed by replaying the graph — it has to be its own persisted fact. `Continue`/`Load Game` call `StoryManager.Load()` and then explicitly `BattleController.Instance.TryResumeSavedBattle()`, rather than the map/player restore happening automatically as a side effect of loading story data.
+- `DialogueManager` (`magus.dialogue`) is the third, holding the in-progress conversation's asset address/entry index — though nothing currently acts on it after `RestoreState` (see [DialogueSystem's Save Data](DialogueSystem.md#save-data)); it's captured but not yet resumed.
 
 ## SaveSystem API
 
@@ -82,7 +81,8 @@ public static class SaveSystem
 
 ## Dependents
 
-- [StorySystem](StorySystem.md) — first and, for v1, only participant
+- [StorySystem](StorySystem.md) — `StoryManager` (first participant) and `CheckpointManager` (the only current caller of `Save()`, via `CheckpointAction` → `CheckpointReachedEvent`)
+- `BattleController`, `DialogueManager` (`magus.battle`/`magus.dialogue`) — second and third participants, see [Participant API](#participant-api) above
 
 ## Future Extensions
 

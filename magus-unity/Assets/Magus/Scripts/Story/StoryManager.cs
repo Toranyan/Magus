@@ -16,6 +16,13 @@ namespace magus.story
         private readonly HashSet<string> _completedNodeIds = new HashSet<string>();
         private readonly HashSet<string> _frontier = new HashSet<string>();
 
+        /// <summary>Nodes currently running an IAsyncStoryAction (e.g. a cutscene in
+        /// progress) - excluded from both "eligible to fire" and "completed" so they don't
+        /// re-fire while waiting, and their children stay locked until they finish. Not
+        /// persisted: an in-progress node interrupted by a save/reload just re-fires from
+        /// scratch next time it's evaluated, same as an incomplete one.</summary>
+        private readonly HashSet<string> _inProgressNodeIds = new HashSet<string>();
+
         public string CurrentChapter { get; private set; }
 
         public string SaveKey => "story";
@@ -73,6 +80,7 @@ namespace magus.story
         public void ResetProgress()
         {
             _completedNodeIds.Clear();
+            _inProgressNodeIds.Clear();
             _blackboard.RestoreSnapshot(null);
             CurrentChapter = null;
             RebuildFrontier();
@@ -115,22 +123,50 @@ namespace magus.story
 
                 foreach (var node in candidates)
                 {
-                    if (_completedNodeIds.Contains(node.Id) || !node.EvaluateConditions(_blackboard))
+                    if (_completedNodeIds.Contains(node.Id) || _inProgressNodeIds.Contains(node.Id) || !node.EvaluateConditions(_blackboard))
                     {
                         continue;
                     }
 
-                    CompleteNode(node);
+                    BeginNode(node);
                     changed = true;
                 }
             }
         }
 
-        private void CompleteNode(StoryNode node)
+        /// <summary>Runs a newly-eligible node's plain actions immediately, then its async
+        /// actions (if any) one at a time in list order - the node doesn't reach FinishNode
+        /// (and its children stay locked) until every async action has signaled done.</summary>
+        private void BeginNode(StoryNode node)
         {
-            node.ExecuteActions(_blackboard);
-            _completedNodeIds.Add(node.Id);
             _frontier.Remove(node.Id);
+            _inProgressNodeIds.Add(node.Id);
+
+            node.ExecuteActions(_blackboard);
+
+            RunAsyncActions(node, node.GetAsyncActions(), 0);
+        }
+
+        private void RunAsyncActions(StoryNode node, List<IAsyncStoryAction> actions, int index)
+        {
+            if (index >= actions.Count)
+            {
+                FinishNode(node);
+                return;
+            }
+
+            actions[index].ExecuteAsync(_blackboard, () => RunAsyncActions(node, actions, index + 1));
+        }
+
+        /// <summary>A node with no async actions reaches this synchronously, in the same
+        /// Evaluate() call, exactly like before this system existed. A node with async
+        /// actions reaches this later, from whatever callback its last one invokes (e.g. a
+        /// cutscene finishing seconds later) - Evaluate() is safe to re-enter at that point,
+        /// since it only ever reads current state, not anything scoped to a specific call.</summary>
+        private void FinishNode(StoryNode node)
+        {
+            _inProgressNodeIds.Remove(node.Id);
+            _completedNodeIds.Add(node.Id);
 
             foreach (var childId in node.ChildIds)
             {
@@ -139,6 +175,8 @@ namespace magus.story
                     _frontier.Add(childId);
                 }
             }
+
+            Evaluate();
         }
 
         /// <summary>Recomputes the frontier from scratch: root nodes (no incoming edges) plus
@@ -202,6 +240,7 @@ namespace magus.story
         public void RestoreState(string json)
         {
             _completedNodeIds.Clear();
+            _inProgressNodeIds.Clear();
 
             if (string.IsNullOrEmpty(json))
             {
