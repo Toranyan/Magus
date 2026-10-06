@@ -60,6 +60,13 @@ namespace magus.story
             Evaluate();
         }
 
+        /// <summary>Read-only access for presentation systems (e.g. DialogueManager showing a
+        /// recorded player name). Writes still only happen inside StoryManager.</summary>
+        public bool TryGetVariable(string key, out StoryVariable variable)
+        {
+            return _blackboard.TryGetVariable(key, out variable);
+        }
+
         public void RaiseEvent(StoryEvent e)
         {
             Evaluate();

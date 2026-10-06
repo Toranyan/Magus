@@ -38,6 +38,7 @@ namespace magus.cutscene
         private string _activeCutsceneAddress;
         private bool _timelineStopped;
         private bool _waitingForDialogue;
+        private bool _timelinePausedForDialogue;
 
         public bool IsPlaying => _activeDirector != null && _activeDirector.state == PlayState.Playing;
 
@@ -46,16 +47,32 @@ namespace magus.cutscene
         private void Awake()
         {
             EventBus.Subscribe<TimelineRequestedEvent>(OnTimelineRequested);
+            EventBus.Subscribe<ScreenFadeRequestedEvent>(OnScreenFadeRequested);
         }
 
         private void OnDestroy()
         {
             EventBus.Unsubscribe<TimelineRequestedEvent>(OnTimelineRequested);
+            EventBus.Unsubscribe<ScreenFadeRequestedEvent>(OnScreenFadeRequested);
         }
 
         private void OnTimelineRequested(TimelineRequestedEvent e)
         {
             Play(e.CutsceneAddress);
+        }
+
+        /// <summary>ScreenFadeAction's handler - lives here rather than on ScreenFader itself
+        /// because ScreenFader is created lazily (see SingletonComponent), so it may not exist
+        /// yet to subscribe on its own.</summary>
+        private void OnScreenFadeRequested(ScreenFadeRequestedEvent e)
+        {
+            FadeAsync(e.TargetAlpha, e.Duration).Forget();
+        }
+
+        private async UniTask FadeAsync(float targetAlpha, float duration)
+        {
+            await ScreenFader.Instance.FadeAsync(targetAlpha, duration);
+            EventBus.Publish(new ScreenFadeFinishedEvent());
         }
 
         /// <summary>Registers a live, already-spawned object (the player, an NPC) under a
@@ -92,6 +109,7 @@ namespace magus.cutscene
             _activeCutsceneAddress = cutsceneAddress;
             _timelineStopped = false;
             _waitingForDialogue = false;
+            _timelinePausedForDialogue = false;
 
             _activeInstance = _cutsceneRoot != null ? Instantiate(prefab, _cutsceneRoot) : Instantiate(prefab);
             _activeDirector = _activeInstance.GetComponent<PlayableDirector>();
@@ -115,13 +133,23 @@ namespace magus.cutscene
         /// <summary>DialogueCutsceneSignal calls this instead of DialogueManager.Play()
         /// directly, so a dialogue started mid-cutscene is tracked here too - the cutscene
         /// isn't considered finished (CutsceneFinishedEvent doesn't fire) until this
-        /// dialogue ends as well, even if the Timeline itself has already stopped.</summary>
-        public void PlayDialogueDuringCutscene(string dialogueAddress)
+        /// dialogue ends as well, even if the Timeline itself has already stopped.
+        ///
+        /// pauseTimeline freezes the Timeline at the signal until the dialogue ends, then
+        /// resumes it - so one Timeline can hold several animate -> talk -> animate beats,
+        /// with every animated actor holding its current pose while the dialogue is up.
+        /// Without it, the Timeline keeps playing underneath the dialogue.</summary>
+        public void PlayDialogueDuringCutscene(string dialogueAddress, bool pauseTimeline = false)
         {
             if (!_waitingForDialogue)
             {
                 _waitingForDialogue = true;
                 DialogueManager.Instance.Ended += OnCutsceneDialogueEnded;
+            }
+
+            if (pauseTimeline)
+            {
+                SetTimelinePaused(true);
             }
 
             DialogueManager.Instance.Play(dialogueAddress);
@@ -131,7 +159,28 @@ namespace magus.cutscene
         {
             DialogueManager.Instance.Ended -= OnCutsceneDialogueEnded;
             _waitingForDialogue = false;
+            SetTimelinePaused(false);
             TryFinishCutscene();
+        }
+
+        /// <summary>Pauses via the root playable's speed rather than PlayableDirector.Pause():
+        /// at speed 0 the graph keeps evaluating the same frame every update, so Animation
+        /// Tracks keep holding their pose (Pause() stops evaluation, which can let an
+        /// Animator fall back to its own controller mid-cutscene).</summary>
+        private void SetTimelinePaused(bool paused)
+        {
+            if (_timelinePausedForDialogue == paused)
+            {
+                return;
+            }
+            _timelinePausedForDialogue = paused;
+
+            if (_activeDirector == null || !_activeDirector.playableGraph.IsValid())
+            {
+                return;
+            }
+
+            _activeDirector.playableGraph.GetRootPlayable(0).SetSpeed(paused ? 0d : 1d);
         }
 
         /// <summary>Binds any track whose name matches a registered actor to that actor's
@@ -142,8 +191,7 @@ namespace magus.cutscene
         /// yet when the cutscene prefab is authored. Tracks with no matching registered
         /// actor are left alone, keeping whatever binding the prefab itself authored (e.g.
         /// an object that's part of the cutscene prefab, not a live registered actor).
-        /// Only resolves root-level tracks - nested tracks inside a Group Track aren't
-        /// covered yet.</summary>
+        /// GetOutputTracks() also walks into Group Tracks, so grouped tracks bind too.</summary>
         private void BindActors(PlayableDirector director)
         {
             if (director.playableAsset is not TimelineAsset timeline)
@@ -179,7 +227,9 @@ namespace magus.cutscene
                     return actor;
                 }
 
-                var component = actor.GetComponent(binding.outputTargetType);
+                // InChildren: a character's Animator usually sits on its model child, not
+                // the root that gets registered (e.g. pc_test_01 -> PlayerCharacter).
+                var component = actor.GetComponentInChildren(binding.outputTargetType, true);
                 if (component != null)
                 {
                     return component;
@@ -240,6 +290,7 @@ namespace magus.cutscene
             _activeInstance = null;
             _activeCutsceneAddress = null;
             _timelineStopped = false;
+            _timelinePausedForDialogue = false;
 
             if (finishedAddress != null)
             {

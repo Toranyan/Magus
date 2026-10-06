@@ -19,8 +19,9 @@ namespace magus.dialogue
         public event Action<DialogueEntry> EntryChanged;
         public event Action Ended;
 
-        /// <summary>Fired when a Choice entry's option is picked and it has a VariableKey set -
-        /// DialogueManager subscribes and publishes DialogueChoiceMadeEvent on EventBus.</summary>
+        /// <summary>Fired when a Choice entry's option is picked, or a TextInput entry is
+        /// submitted, and it has a VariableKey set - DialogueManager subscribes and publishes
+        /// DialogueChoiceMadeEvent on EventBus.</summary>
         public event Action<string, string> ResponseRecorded;
 
         public void Start(DialogueAsset asset)
@@ -43,6 +44,12 @@ namespace magus.dialogue
             if (CurrentEntry != null && CurrentEntry.Kind == DialogueEntryKind.Choice)
             {
                 Debug.LogWarning("[DialogueRunner] Advance() called on a Choice entry - call ChooseOption() instead.");
+                return;
+            }
+
+            if (CurrentEntry != null && CurrentEntry.Kind == DialogueEntryKind.TextInput)
+            {
+                Debug.LogWarning("[DialogueRunner] Advance() called on a TextInput entry - call SubmitText() instead.");
                 return;
             }
 
@@ -70,6 +77,25 @@ namespace magus.dialogue
             }
 
             // Every option continues to the same next entry - see DialogueEntry's Choice fields.
+            MoveNext();
+        }
+
+        /// <summary>Answers a TextInput entry. Records the value via ResponseRecorded (if
+        /// VariableKey is set), then continues - validation (empty/trimmed) is the caller's
+        /// job, this just records what it's given.</summary>
+        public void SubmitText(string value)
+        {
+            if (!IsPlaying || CurrentEntry == null || CurrentEntry.Kind != DialogueEntryKind.TextInput)
+            {
+                Debug.LogWarning("[DialogueRunner] SubmitText() called while not on a TextInput entry.");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(CurrentEntry.VariableKey))
+            {
+                ResponseRecorded?.Invoke(CurrentEntry.VariableKey, value);
+            }
+
             MoveNext();
         }
 

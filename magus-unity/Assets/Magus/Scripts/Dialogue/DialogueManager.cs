@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Cysharp.Threading.Tasks;
@@ -30,6 +31,9 @@ namespace magus.dialogue
         public event Action Ended;
 
         private UIDialogueView _viewEventsWired;
+
+        /// <summary>{Key} tokens in resolved text - see FormatVariables.</summary>
+        private static readonly Regex VariableTokenRegex = new Regex(@"\{(\w+)\}");
 
         private void Awake()
         {
@@ -62,6 +66,7 @@ namespace magus.dialogue
             {
                 view.AdvanceRequested += OnAdvanceRequested;
                 view.ChoiceSelected += OnChoiceSelected;
+                view.TextSubmitted += OnTextSubmitted;
                 _viewEventsWired = view;
             }
 
@@ -82,6 +87,30 @@ namespace magus.dialogue
             {
                 _runner.ChooseOption(optionIndex);
             }
+        }
+
+        /// <summary>Empty/whitespace falls back to the entry's DefaultValue; if that's empty
+        /// too, the submission is ignored and the prompt stays up.</summary>
+        private void OnTextSubmitted(string value)
+        {
+            var entry = _runner.CurrentEntry;
+            if (!IsPlaying || entry == null || entry.Kind != DialogueEntryKind.TextInput)
+            {
+                return;
+            }
+
+            value = value?.Trim();
+            if (string.IsNullOrEmpty(value))
+            {
+                value = entry.DefaultValue?.Trim();
+            }
+            if (string.IsNullOrEmpty(value))
+            {
+                return;
+            }
+
+            _viewEventsWired?.HideTextInput();
+            _runner.SubmitText(value);
         }
 
         private void OnResponseRecorded(string variableKey, string value)
@@ -155,19 +184,35 @@ namespace magus.dialogue
                 case DialogueEntryKind.Choice:
                     await PresentChoiceEntryAsync(view, entry);
                     break;
+                case DialogueEntryKind.TextInput:
+                    await PresentTextInputEntryAsync(view, entry);
+                    break;
             }
         }
 
         private async UniTask PresentTextEntryAsync(UIDialogueView view, DialogueEntry entry)
         {
             view.ClearChoices();
+            view.HideTextInput();
             view.SetAdvanceButtonVisible(true);
             await ApplySpeakerAsync(view, entry.CharacterId);
             view.SetBodyText(await ResolveLocalizedStringAsync(entry.Text));
         }
 
+        /// <summary>Text (if set) is shown as the prompt, with the speaker if CharacterId is
+        /// set - e.g. an NPC asking "What's your name?".</summary>
+        private async UniTask PresentTextInputEntryAsync(UIDialogueView view, DialogueEntry entry)
+        {
+            view.ClearChoices();
+            view.SetAdvanceButtonVisible(false);
+            await ApplySpeakerAsync(view, entry.CharacterId);
+            view.SetBodyText(entry.Text != null && !entry.Text.IsEmpty ? await ResolveLocalizedStringAsync(entry.Text) : string.Empty);
+            view.ShowTextInput(FormatVariables(entry.DefaultValue), entry.MaxLength);
+        }
+
         private async UniTask PresentChoiceEntryAsync(UIDialogueView view, DialogueEntry entry)
         {
+            view.HideTextInput();
             view.SetAdvanceButtonVisible(false);
 
             var optionTexts = new List<string>(entry.Options.Count);
@@ -205,12 +250,30 @@ namespace magus.dialogue
                 }
             }
 
-            view.SetSpeaker(character.DisplayName, portrait);
+            view.SetSpeaker(FormatVariables(character.DisplayName), portrait);
         }
 
         private static async UniTask<string> ResolveLocalizedStringAsync(UnityEngine.Localization.LocalizedString text)
         {
-            return await text.GetLocalizedStringAsync();
+            return FormatVariables(await text.GetLocalizedStringAsync());
+        }
+
+        /// <summary>Replaces {Key} with StoryBlackboard variable Key (e.g. "{PlayerName}"
+        /// after a TextInput entry recorded it). Unknown keys are left as-is. Read-only - see
+        /// StoryManager.TryGetVariable. Localized entries using this must NOT be marked
+        /// Smart in the string table, or Smart Format will try to resolve the braces itself
+        /// (and fail, since no arguments are passed).</summary>
+        private static string FormatVariables(string text)
+        {
+            if (string.IsNullOrEmpty(text) || text.IndexOf('{') < 0)
+            {
+                return text;
+            }
+
+            return VariableTokenRegex.Replace(text, match =>
+                StoryManager.Instance.TryGetVariable(match.Groups[1].Value, out var variable)
+                    ? variable.ToString()
+                    : match.Value);
         }
 
         private void OnEnded()

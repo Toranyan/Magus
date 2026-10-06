@@ -15,12 +15,23 @@ namespace magus.cutscene
     /// Goes through CutsceneManager.PlayDialogueDuringCutscene rather than calling
     /// DialogueManager.Play() directly, so the cutscene isn't considered finished (and
     /// doesn't publish CutsceneFinishedEvent) until this dialogue has also ended - see
-    /// CutsceneManager.</summary>
+    /// CutsceneManager.
+    ///
+    /// Two reactions to choose from in the Signal Receiver:
+    /// - PlayDialogueAndWait: freezes the Timeline at the signal until the dialogue ends,
+    ///   then continues. Use this for multi-beat cutscenes (pose -> talk -> animate -> talk)
+    ///   - actors hold their pose while the dialogue is up.
+    /// - PlayDialogue: the Timeline keeps playing underneath the dialogue.</summary>
     public class DialogueCutsceneSignal : MonoBehaviour
     {
         public void PlayDialogue(string dialogueAddress)
         {
             CutsceneManager.Instance.PlayDialogueDuringCutscene(dialogueAddress);
+        }
+
+        public void PlayDialogueAndWait(string dialogueAddress)
+        {
+            CutsceneManager.Instance.PlayDialogueDuringCutscene(dialogueAddress, pauseTimeline: true);
         }
     }
 }

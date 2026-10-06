@@ -23,5 +23,16 @@ namespace magus.story
         public static StoryVariable FromInt(int value) => new StoryVariable { Type = ValueType.Int, IntValue = value };
         public static StoryVariable FromFloat(float value) => new StoryVariable { Type = ValueType.Float, FloatValue = value };
         public static StoryVariable FromString(string value) => new StoryVariable { Type = ValueType.String, StringValue = value };
+
+        public override string ToString()
+        {
+            return Type switch
+            {
+                ValueType.Bool => BoolValue.ToString(),
+                ValueType.Int => IntValue.ToString(),
+                ValueType.Float => FloatValue.ToString(),
+                _ => StringValue ?? string.Empty
+            };
+        }
     }
 }

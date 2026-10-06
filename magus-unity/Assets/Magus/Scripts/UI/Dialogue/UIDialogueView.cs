@@ -8,8 +8,9 @@ using tora.ui;
 namespace magus.ui
 {
     /// <summary>Dumb view - DialogueManager resolves character/localized content and calls
-    /// these setters, same division of responsibility as UIBattleView. v1 fields only
-    /// (Name, Portrait, Text, Choices) - see Docs/Design/DialogueSystem.md#ui.</summary>
+    /// these setters, same division of responsibility as UIBattleView. Name, Portrait,
+    /// Text, Choices, and a text input (TextInput entries, e.g. naming the player) - see
+    /// Docs/Design/DialogueSystem.md#ui.</summary>
     public class UIDialogueView : UIViewBase
     {
         [SerializeField] private TextMeshProUGUI _nameText;
@@ -18,6 +19,11 @@ namespace magus.ui
         [SerializeField] private Button _advanceButton;
         [SerializeField] private Transform _choicesContainer;
         [SerializeField] private Button _choiceButtonPrefab;
+
+        [Header("Text Input (TextInput entries)")]
+        [SerializeField] private GameObject _textInputRoot;
+        [SerializeField] private TMP_InputField _textInputField;
+        [SerializeField] private Button _textInputSubmitButton;
 
         private readonly List<Button> _spawnedChoiceButtons = new List<Button>();
 
@@ -28,9 +34,57 @@ namespace magus.ui
         /// <summary>Player picked the option at this index.</summary>
         public event Action<int> ChoiceSelected;
 
+        /// <summary>Player confirmed the text input (submit button or Enter), with its raw,
+        /// untrimmed value.</summary>
+        public event Action<string> TextSubmitted;
+
         private void Awake()
         {
             _advanceButton.onClick.AddListener(() => AdvanceRequested?.Invoke());
+
+            if (_textInputSubmitButton != null)
+            {
+                _textInputSubmitButton.onClick.AddListener(SubmitText);
+            }
+            if (_textInputField != null)
+            {
+                _textInputField.onSubmit.AddListener(_ => SubmitText());
+            }
+
+            HideTextInput();
+        }
+
+        public void ShowTextInput(string defaultValue, int maxLength)
+        {
+            if (_textInputRoot == null || _textInputField == null)
+            {
+                Debug.LogError("[UIDialogueView] TextInput entry shown, but the text input fields aren't assigned on the UIDialogueView prefab.");
+                return;
+            }
+
+            _textInputRoot.SetActive(true);
+            _textInputField.characterLimit = Mathf.Max(0, maxLength);
+            _textInputField.text = defaultValue ?? string.Empty;
+            _textInputField.Select();
+            _textInputField.ActivateInputField();
+        }
+
+        public void HideTextInput()
+        {
+            if (_textInputRoot != null)
+            {
+                _textInputRoot.SetActive(false);
+            }
+        }
+
+        private void SubmitText()
+        {
+            if (_textInputRoot == null || !_textInputRoot.activeInHierarchy)
+            {
+                return;
+            }
+
+            TextSubmitted?.Invoke(_textInputField.text);
         }
 
         public void SetSpeaker(string displayName, Sprite portrait)
