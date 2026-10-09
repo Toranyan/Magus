@@ -48,7 +48,7 @@ Both edges are implemented. `StartDialogueAction` (`StoryNode`) → `Conversatio
 
 `DialogueAsset : ScriptableObject` holds a plain `List<DialogueEntry>` (`Magus/Scripts/Dialogue/DialogueAsset.cs`), authored via Unity's default reorderable-list Inspector — no custom editor needed at all. `DialogueRunner` plays it as `index++`, not graph traversal.
 
-`DialogueEntry` (`Magus/Scripts/Dialogue/DialogueEntry.cs`) is **one concrete class with a `Kind` enum** (`Text`/`Choice`/`TextInput`), not polymorphic subclasses — a deliberate reversal of [StorySystem's Conditions/Actions pattern](StorySystem.md#actions). The polymorphic `[SerializeReference]` approach only pays for itself when a custom editor is already drawing the list (as `GraphEditorWindow` does for `StoryNode`'s Conditions/Actions, via `BuildSerializeReferenceListField`); a plain `List<DialogueEntry>` on a ScriptableObject gets full add/remove/reorder from Unity's default Inspector for free, with zero editor code, only if every element is the same concrete type. A few fields going unused per `Kind` (Choice's `Options` on a Text entry) is the trade, and it's a small one for two kinds.
+`DialogueEntry` (`Magus/Scripts/Dialogue/DialogueEntry.cs`) is **one concrete class with a `Kind` enum** (`Text`/`Choice`/`TextInput`), not polymorphic subclasses — a deliberate reversal of [StorySystem's Conditions/Actions pattern](StorySystem.md#actions). The polymorphic `[SerializeReference]` approach only pays for itself when a custom editor is already drawing the list (as `GraphEditorWindow` does for `StoryNode`'s Conditions/Actions, via `BuildSerializeReferenceListField`); a plain `List<DialogueEntry>` on a ScriptableObject gets full add/remove/reorder from Unity's default Inspector for free, with zero editor code, only if every element is the same concrete type. A few fields going unused per `Kind` (Choice's `Options` on a Text entry) is the trade, and it's a small one for two kinds. The unused fields are hidden in the Inspector by `DialogueEntryDrawer` (`Magus/Scripts/Dialogue/Editor/`), a small property drawer that shows only the fields the entry's `Kind` uses. Hidden fields keep their values. This is the only editor code for dialogue; Unity's default list still handles add, remove and reorder.
 
 ### Text
 `CharacterId` (`CharacterMasterData` Id), `Expression` (string key, ignored until Character Assets grow past one portrait — see [Character Assets](#character-assets)), `Text` (`LocalizedString`, see [Localization](#localization)).
@@ -82,6 +82,30 @@ bool IsPlaying { get; }
 `Play` takes an Addressables path rather than a pre-loaded asset, matching `BattleController.Init(BattleInitOptions)`'s convention — and giving `CaptureState` a stable string to save (see [Save Data](#save-data)).
 
 `DialogueManager` resolves each entry's presentable content and drives the view: for a Text entry, looks up `CharacterMasterData` by `CharacterId`, loads its portrait `Sprite` via Addressables, and resolves `Text` via `LocalizedString.GetLocalizedStringAsync()`; for a Choice entry, resolves each option's text the same way, and subscribes to `DialogueRunner.ResponseRecorded` to publish `DialogueChoiceMadeEvent`. This resolution/integration logic lives on `DialogueManager`, not `DialogueRunner` (which only knows the asset's data, nothing about master data/localization/UI/EventBus) or the view (which stays a dumb setter, see [UI](#ui)).
+
+When a conversation plays to its end, `DialogueManager` publishes `StoryEvent { Id = StoryFlags.ConversationSeen(address) }` before raising `Ended`, so the flag is already recorded when a cutscene waiting on the dialogue completes its node. `Stop()` clears the address first, so an interrupted conversation isn't reported. See [StorySystem's Progression](StorySystem.md#progression).
+
+## Player Input
+Any playing conversation locks player input, wherever it came from (story node, cutscene marker, NPC). `DialogueManager.Play()` publishes `DialogueStartedEvent` as soon as it's called, before the asset loads, so the lock starts on the same frame the player pressed talk. It publishes `DialogueEndedEvent` when the conversation ends, is stopped, or its asset fails to load. That last case matters, so a bad address can't leave the player frozen. `PlayerController` subscribes and adds or removes its dialogue input lock. Locks are per owner (`AddInputLock`/`RemoveInputLock`), shared with `CutsceneManager`.
+
+**Interact (E) advances** a Text entry (`DialogueManager.TryAdvance`), alongside the view's button. It's ignored on Choice/TextInput entries, while paused, and on the frame the entry appeared, so the E press that starts a conversation can't also skip its first line.
+
+## NPC Dialogue
+`Magus/Scripts/Interaction/`:
+- `Interactable` — base for anything usable with Interact: a `Range` (flat XZ meters) and an optional `Indicator` child object, shown only while it's the focused interactable. The indicator is a quiet in-world cue (e.g. a small speech-bubble sprite), not a UI prompt. `InteractionIndicator` keeps it facing the camera with a slight bob.
+- `InteractionManager` — created on demand by the first `Interactable` to enable. Each frame it focuses the nearest interactable within range of the player; on Interact it calls `Interact()` on that one. Nothing is focused while the player's input is locked, so indicators hide during dialogue and cutscenes.
+- `NpcDialogue : Interactable` — an ordered rule list, each rule being Conditions → `DialogueAddress`. The first rule whose conditions all pass wins, else `DefaultDialogueAddress`. If nothing matches and there's no default, the NPC can't be focused. Conditions are the same `IStoryCondition` types `StoryNode` uses, checked through the read-only `StoryManager.CheckConditions`. They're picked in the Inspector via `[SerializeReference, SubclassPicker]` (`SubclassPickerDrawer`), since Unity's default Inspector can't create interface-typed instances.
+
+NPCs keep no state of their own. "Remembering" is the shared, saved StoryBlackboard: typically a `ConversationSeenCondition` on an earlier conversation plus story flags. Example:
+
+```text
+Smith
+  1. [StoryFlagCondition village_quest_done]           -> Dialogue/smith_thanks
+  2. [ConversationSeenCondition Dialogue/smith_intro]  -> Dialogue/smith_reminder
+  Default                                              -> Dialogue/smith_intro
+```
+
+A quest that needs several NPCs, in any order, is one `StoryNode` with a `ConversationSeenCondition` per NPC, since all conditions must pass. See [StorySystem's Progression](StorySystem.md#progression).
 
 ## DialogueRunner
 Plain index-based traversal through `DialogueAsset.Entries` — `Start`/`Advance`/`Stop`, plus `ChooseOption(index)` for a Choice entry (records via the `ResponseRecorded` C# event if `VariableKey` is set, then advances same as any other entry). No graph, no branching, no EventBus dependency — publishing `DialogueChoiceMadeEvent` is `DialogueManager`'s job, keeping `DialogueRunner` a dependency-free traversal engine.
@@ -125,8 +149,8 @@ None. `GraphValidator` doesn't apply — there's no graph to validate anymore. A
 
 ## Future Extensions
 - Deciding whether/how to resume a mid-conversation save at all, then wiring `DialogueManager.RestoreState` to act on it; see [Save Data](#save-data)
-- Disabling player input while dialogue is playing, not just during cutscenes — tracked in [StorySystem's Future Extensions](StorySystem.md#future-extensions)
+- NPC turning to face the player (or vice versa) when a conversation starts
+- Multiple NPCs in range: today the nearest wins; facing direction isn't considered
 - Camera, Music, Background, Wait entry kinds; reading `StoryBlackboard` from within a conversation (see [Deferred](#deferred-to-a-later-pass))
 - Character Expressions, ThemeColor, Voice
 - History, Auto, Skip UI
-- `ConversationSeenCondition` for StorySystem, once `DialogueManager` can report which conversations have been played (see [StorySystem's Future Extensions](StorySystem.md#future-extensions))

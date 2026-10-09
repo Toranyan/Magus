@@ -9,7 +9,7 @@ Build order — steps 1-4 are implemented:
 2. [GraphFramework](GraphFramework.md) — shared node/graph base that StoryGraph is built on (MVP editor scope only)
 3. [SaveSystem](SaveSystem.md) — StoryManager is its first participant
 4. StorySystem (this doc) — implemented; see [Core Components](#core-components) for what's live vs. deferred pending step 5
-5. [DialogueSystem](DialogueSystem.md) — implemented (v1 entry set/runtime/UI; not graph-based — see its Dialogue Data section). Both directions of the link between the two systems are done: `StartDialogueAction` → `ConversationRequestedEvent` → `DialogueManager` requests a conversation (see [Actions](#actions)/[Narrative Events](#narrative-events)); `DialogueChoiceMadeEvent` → `StoryManager` records the player's answer into `StoryBlackboard` (see [Blackboard](#blackboard)). `SeenConversations` save data still isn't wired, since nothing reports conversation *completion* back yet
+5. [DialogueSystem](DialogueSystem.md) — implemented (v1 entry set/runtime/UI; not graph-based — see its Dialogue Data section). Both directions of the link between the two systems are done: `StartDialogueAction` → `ConversationRequestedEvent` → `DialogueManager` requests a conversation (see [Actions](#actions)/[Narrative Events](#narrative-events)); `DialogueChoiceMadeEvent` → `StoryManager` records the player's answer into `StoryBlackboard` (see [Blackboard](#blackboard)). Conversation *completion* is reported back too, as a flag — see [Progression](#progression)
 
 ## Purpose
 The Story System determines **what narrative content becomes available**. It is data-driven and presentation-agnostic.
@@ -71,8 +71,8 @@ Directed graph of StoryNodes.
 ### Conditions
 Implement `IStoryCondition`. Stored as `[SerializeReference] List<IStoryCondition>` on `StoryNode` (see [GraphFramework — Polymorphic Fields](GraphFramework.md#polymorphic-fields-conditions--actions)).
 
-- Implemented: `StoryFlagCondition`, `VariableCondition`
-- Not implemented — each depends on a system that doesn't exist yet: `Item` (inventory), `BossKilled` (combat doesn't publish a kill event on EventBus yet), `ConversationSeen` (DialogueSystem)
+- Implemented: `StoryFlagCondition`, `VariableCondition`, `ConversationSeenCondition` (a flag `DialogueManager` sets when a conversation plays to its end — see [Progression](#progression))
+- Not implemented: `Item` (needs an inventory). No `BossKilled` condition is planned anymore — a kill is just a flag (`StoryEventOnDeath` + `StoryFlagCondition`), see [Progression](#progression)
 
 ### Actions
 Implement `IStoryAction`. Stored as `[SerializeReference] List<IStoryAction>` on `StoryNode`, same mechanism as Conditions.
@@ -109,8 +109,9 @@ Published on [EventBus](EventBus.md) after actions run.
   - `BattleStartRequestedEvent`, published by `StartBattleAction`. Not consumed by a presentation system — `GameManager` subscribes, stores the options on `PendingBattleInitOptions`, and calls `ChangeState(GameState.Battle)`. `BattleGameState.OnEnter()` reads those options instead of hardcoding a map/player, so entering Battle is entirely story-graph-driven. `UITitle`'s New Game/Continue buttons only reset/load story progress and never call `ChangeState` themselves — doing both would enter Battle twice.
   - `BattleReadyEvent`, published by `BattleController` once its map/player load chain (and `InitRequired`'s master-data/player-setup/camera step) has actually finished — not just requested. Consumed by `StartBattleAction` — see [Async Actions](#async-actions) for why this exists (it's a bug fix, not just symmetry with the other `Start*Action`s).
   - `ConversationRequestedEvent`, published by `StartDialogueAction`. `DialogueManager` subscribes directly and calls `Play(e.GraphAddress)` — no `GameManager`-style intermediary needed here, since playing a conversation doesn't change `GameState`.
-  - `TimelineRequestedEvent`, published by `StartTimelineAction`. `CutsceneManager` subscribes directly and calls `Play(e.CutsceneAddress)` — same reasoning as `ConversationRequestedEvent`, no `GameState` change involved. The cutscene address points at a self-contained Addressable prefab (`PlayableDirector` + `TimelineAsset` + whatever's bound inside the prefab). Runtime actors not part of the prefab (the live player, eventually NPCs) are bound via `CutsceneManager.RegisterActor(name, gameObject)` — any Timeline track named to match a registered actor gets bound automatically before `Play()`, resolving to whatever component type that track actually needs (`Animator` for an Animation Track, the `GameObject` itself for an Activation Track, etc.) via `PlayableBinding.outputTargetType`. Components are looked up with `GetComponentInChildren`, so a track still binds when the component sits on a child of the registered object — needed for the player, whose `Animator` is on its `PlayerCharacter` model child, not the `pc_test_01` root. `BattleController` registers the player as `"Player"` right after spawning it. `CutsceneManager` also toggles `PlayerController.InputEnabled` off for `Play()` and back on for `Stop()`/natural completion, so a Timeline Animation Track can drive the player's Animator without the player's own input fighting it.
+  - `TimelineRequestedEvent`, published by `StartTimelineAction`. `CutsceneManager` subscribes directly and calls `Play(e.CutsceneAddress)` — same reasoning as `ConversationRequestedEvent`, no `GameState` change involved. The cutscene address points at a self-contained Addressable prefab (`PlayableDirector` + `TimelineAsset` + whatever's bound inside the prefab). Runtime actors not part of the prefab (the live player, eventually NPCs) are bound via `CutsceneManager.RegisterActor(name, gameObject)` — any Timeline track named to match a registered actor gets bound automatically before `Play()`, resolving to whatever component type that track actually needs (`Animator` for an Animation Track, the `GameObject` itself for an Activation Track, etc.) via `PlayableBinding.outputTargetType`. Components are looked up with `GetComponentInChildren`, so a track still binds when the component sits on a child of the registered object — needed for the player, whose `Animator` is on its `PlayerCharacter` model child, not the `pc_test_01` root. `BattleController` registers the player as `"Player"` right after spawning it. `CutsceneManager` also holds a player input lock (`PlayerController.AddInputLock(this)`) from `Play()` until `Stop()`/natural completion, so a Timeline Animation Track can drive the player's Animator without the player's own input fighting it. Locks are per owner (`InputEnabled` is true only with none held), so a dialogue ending inside a cutscene doesn't hand control back early — see [DialogueSystem's Player Input](DialogueSystem.md#player-input).
   - `CutsceneFinishedEvent`, published by `CutsceneManager.Stop()` — covers both natural completion (the `PlayableDirector` stops) and interruption (a manual `Stop()` call, or a new `Play()` cutting off a previous one), so a `StartTimelineAction` waiting on it never gets stuck. If a Timeline Signal called `CutsceneManager.PlayDialogueDuringCutscene()` mid-playback (see [Actions](#actions)), this event is held back until that dialogue's own `DialogueManager.Ended` fires too — whichever of "Timeline stopped" / "dialogue ended" happens last is what actually triggers it. Consumed by `StartTimelineAction` — see [Async Actions](#async-actions).
+  - **Dialogue Markers (preferred).** A Signal Receiver's reactions are keyed by Signal Asset, so every Signal Emitter sharing `PlayDialogueSignal` plays the same fixed address — different dialogues would each need their own Signal Asset. `DialogueMarker` (`Magus/Scripts/Cutscene/`) carries its own `DialogueAddress` and `PauseTimeline` (default on), so one Timeline holds any number of conversations. Add it via right-click > Add Dialogue Marker on the Timeline's Markers row (or the Signal Track). It's delivered through `INotificationReceiver` to `DialogueCutsceneSignal.OnNotify`, which must sit on the director's GameObject (Markers row) or the track's bound GameObject. In a cutscene prefab both are the root. It fires once per play and retroactively, so a skipped frame can't drop a conversation. `DialogueMarkerEditor` shows the address as the marker's tooltip and flags a missing one. The Signal Receiver path below still works.
   - **Multi-beat cutscenes.** `DialogueCutsceneSignal` has two Signal Receiver reactions: `PlayDialogue`, where the Timeline keeps playing underneath, and `PlayDialogueAndWait`. `PlayDialogueAndWait` freezes the Timeline at the signal until the dialogue ends, then resumes it. It pauses by setting the root playable's speed to 0 rather than calling `PlayableDirector.Pause()`, so the graph keeps evaluating the same frame and every Animation Track holds its pose. This means one continuous Timeline can carry several pose → talk → animate → talk beats with a shared actor, e.g. the player asleep → dialogue → stands up → dialogue. That replaces the older workaround of queuing one small cutscene per beat, where the player's pose snapped back to its Animator controller between cutscenes. Set Animation Track clips' post-extrapolation to **Hold** so an actor keeps a clip's last frame while waiting on a dialogue that starts after the clip ends.
   - `ScreenFadeRequestedEvent` / `ScreenFadeFinishedEvent` — see [Screen Fade](#screen-fade).
   - `CheckpointReachedEvent`, published by `CheckpointAction`. `CheckpointManager` (`Magus/Scripts/Checkpoint/`) subscribes and calls `SaveSystem.Save()` — see [SaveSystem's Dependents](SaveSystem.md#dependents). This is also, as of now, the *only* thing that ever calls `Save()` anywhere in the project — the game saves at checkpoints, nowhere else.
@@ -125,6 +126,37 @@ Presentation systems subscribe independently.
 
 The intended order is: the story graph fades to black and loads, then the cutscene fades in. The cutscene poses its actors (e.g. the player lying down) on its first frame, before the screen clears. If the story graph faded in instead, the player would visibly stand idle for a moment before the Timeline took over.
 
+## Progression
+How the story moves forward, and who goes first. The answer is neither: the graph and the game take turns.
+
+- **Gameplay reports facts, never moves the graph.** A `StoryEvent { Id }` on EventBus ("entered_village", "slime_boss_killed"). Gameplay doesn't know which node is active and never calls into the graph.
+- **The graph decides what facts mean.** A node in the frontier waits on its Conditions. When they pass it runs its Actions (cutscene, dialogue, battle) and unlocks its children, which then wait on the next facts.
+
+```text
+graph:  node_3 done --> node_4 waits: [StoryFlagCondition "entered_village"]
+                                            ^
+game:   player enters StoryTriggerZone --> StoryEvent "entered_village"
+                                            |
+graph:  node_4 passes --> runs actions --> unlocks node_5, waits: ["slime_boss_killed"] ...
+```
+
+**Events are recorded as facts.** `StoryManager.RaiseEvent` sets `StoryEvent.Id` as a StoryBlackboard flag, then evaluates. So the order the player does things in doesn't matter: if the boss is killed before the node that asks for it is reachable, that node's `StoryFlagCondition` already passes the moment it enters the frontier. A plain "something happened" event would have been missed. Flags are also saved, so facts survive Continue.
+
+Reporters (`Magus/Scripts/Story/Triggers/`):
+- `StoryTriggerZone` — trigger collider in a map prefab, reports its Id when the player enters (once per load by default).
+- `StoryEventOnDeath` — alongside a `Unit`, reports its Id when it dies (same pattern as `LootDropper`).
+- `DialogueManager` — reports `StoryFlags.ConversationSeen(address)` (`"seen:<address>"`) when a conversation plays to its end. A conversation cut off by `Stop()` doesn't count. Read it with `ConversationSeenCondition`.
+
+Flag names are free-form strings matched between the reporter's Id and the node's `StoryFlagCondition.Flag`. Only code-generated names (like "seen:") live in `StoryFlags`, so they can't drift. Suggested convention: `<what>_<verb past tense>`, e.g. `village_entered`, `slime_boss_killed`.
+
+### Rebuilding the world after a load
+Completed nodes' actions never run again after a load: replaying completed nodes doesn't re-fire them. So whatever a story beat changed in the world (boss gone, gate open, NPC moved in) can't be restored by replaying it. It has to be derived from the facts. `StoryFlagGate` (also in `Triggers/`) turns its Targets on or off depending on one flag. It applies when enabled (the map loads after `StoryManager.Load()`, so restored flags are already there) and, if `ReactLive` is on, the moment the flag changes. It listens to `StoryStateChangedEvent`, which `StoryManager.Evaluate()` publishes every time; every path that changes flags, variables or completed nodes ends in an `Evaluate()`. Turn `ReactLive` off when the target sets the flag itself and must finish first, e.g. a boss whose `StoryEventOnDeath` would otherwise hide it mid death animation. `BattleController` saving the last map is the same idea at map level.
+
+### Save rules
+Only story state is saved: completed node Ids plus blackboard flags and variables (see [Save Data](#save-data)). Saving happens only at checkpoints. Two consequences of how nodes run:
+- **Put `CheckpointAction` alone on its own node.** Plain actions run in `BeginNode`, before the node is marked complete, so the save records the checkpoint node as not completed. On load it runs again. That's harmless when it only saves, but any cutscene or dialogue sharing the node would replay on every Continue.
+- **Checkpoint at calm moments** (after a cutscene, on entering an area), never mid-sequence. An in-progress async node isn't persisted (see [Async Actions](#async-actions)); after a load it simply starts over.
+
 ## Save Data
 StoryManager registers with [SaveSystem](SaveSystem.md#participant-api) as an `ISaveParticipant`. Its data:
 - Completed node Ids
@@ -132,7 +164,7 @@ StoryManager registers with [SaveSystem](SaveSystem.md#participant-api) as an `I
 - Story flags
 - Current chapter (a single tracked value, not yet a Blackboard scope — see [Blackboard](#blackboard))
 
-"Seen conversations" isn't part of the save data yet — there's nothing to populate it until DialogueSystem exists. Add it alongside DialogueSystem rather than as an unused field now.
+Seen conversations aren't a separate field: they're flags (`"seen:<address>"`), saved with the rest of the blackboard.
 
 Never serialize ScriptableObjects.
 
@@ -165,9 +197,8 @@ Missing assets is not yet checked, even though `StartBattleAction`/`StartDialogu
 - Full graph editor feature set (search, comments, minimap, runtime highlighting, undo/redo polish, copy/paste)
 - Missing-asset validation for `StartBattleAction`/`StartDialogueAction`/`StartTimelineAction`'s Addressables path fields (see [Validation](#validation))
 - `CheckpointManager.CurrentCheckpointId` isn't persisted (`CheckpointManager` isn't an `ISaveParticipant`) — nothing reads it back yet (e.g. no "respawn at last checkpoint" logic), add persistence once something does
-- Whether player input should be disabled while dialogue is playing, not just during cutscenes (`PlayerController.SetInputEnabled` exists and `CutsceneManager` already uses it — `DialogueManager` doesn't yet)
 - A `PopupRequestedEvent`/`StartPopupAction` pair — "Popups" has been in the architecture diagram since the first draft but nothing has ever requested one
-- `ItemCondition`, `BossKilledCondition`, `ConversationSeenCondition`, `UnlockEnding` action, `EndingUnlocked` event, and `SeenConversations` save data — all gated on the systems/content they depend on (inventory, a combat kill event on EventBus, ending content, `DialogueManager` reporting completed conversations) existing
-- A gameplay-published `StoryEvent` — `StoryManager` already subscribes on EventBus, but nothing in gameplay code publishes one yet
+- `ItemCondition`, `UnlockEnding` action and `EndingUnlocked` event — gated on the systems/content they depend on (inventory, ending content) existing
+- `NpcInteract`-style reporter (talk-to-NPC as an interaction, not just a conversation finishing) — needs an interaction system; until then `ConversationSeenCondition` covers "talked to X"
 - A `StoryManager` GameObject/`StoryGraph` reference wired into an actual scene — not done as part of this pass
 - Multiple save slots (tracked at the [SaveSystem](SaveSystem.md#future-extensions) level, not here)

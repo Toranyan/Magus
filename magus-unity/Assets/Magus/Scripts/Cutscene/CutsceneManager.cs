@@ -123,6 +123,14 @@ namespace magus.cutscene
                 return;
             }
 
+            // A prefab left on Play On Awake has already built its graph and started
+            // playing during Instantiate - before any actor is bound. Reset it so Play()
+            // below rebuilds the graph with the bindings, from time 0.
+            if (_activeDirector.state == PlayState.Playing)
+            {
+                _activeDirector.Stop();
+            }
+
             BindActors(_activeDirector);
             SetPlayerInputEnabled(false);
 
@@ -303,7 +311,20 @@ namespace magus.cutscene
         {
             if (_actors.TryGetValue(PlayerActorName, out var player) && player != null)
             {
-                player.GetComponent<PlayerController>()?.SetInputEnabled(enabled);
+                var controller = player.GetComponent<PlayerController>();
+                if (controller == null)
+                {
+                    return;
+                }
+
+                if (enabled)
+                {
+                    controller.RemoveInputLock(this);
+                }
+                else
+                {
+                    controller.AddInputLock(this);
+                }
             }
         }
     }

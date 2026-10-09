@@ -67,8 +67,44 @@ namespace magus.story
             return _blackboard.TryGetVariable(key, out variable);
         }
 
+        /// <summary>Read-only: evaluates conditions against the blackboard without running
+        /// anything - e.g. NpcDialogue picking which line to play. All must pass (same as a
+        /// StoryNode); null entries count as failing; an empty list passes.</summary>
+        public bool CheckConditions(IReadOnlyList<IStoryCondition> conditions)
+        {
+            if (conditions == null)
+            {
+                return true;
+            }
+
+            foreach (var condition in conditions)
+            {
+                if (condition == null || !condition.Evaluate(_blackboard))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>Read-only flag check, e.g. for StoryFlagGate restoring the world after a load.</summary>
+        public bool HasFlag(string flag)
+        {
+            return _blackboard.HasFlag(flag);
+        }
+
+        /// <summary>Gameplay reports a fact ("entered_village", "slime_boss_killed") - it's
+        /// recorded as a flag before the graph is evaluated, so it doesn't matter whether
+        /// the node waiting on it is reachable yet: a StoryFlagCondition checking it later
+        /// will already pass. Facts persist with the save (blackboard), events wouldn't.
+        /// See Docs/Design/StorySystem.md#progression.</summary>
         public void RaiseEvent(StoryEvent e)
         {
+            if (!string.IsNullOrEmpty(e.Id))
+            {
+                _blackboard.SetFlag(e.Id);
+            }
+
             Evaluate();
         }
 
@@ -102,8 +138,16 @@ namespace magus.story
 
         /// <summary>Re-checks every node currently eligible for evaluation (the frontier) and
         /// completes any whose conditions now pass, expanding the frontier to their children,
-        /// until a full pass produces no further completions.</summary>
+        /// until a full pass produces no further completions. Then publishes
+        /// StoryStateChangedEvent - every path that can change flags/variables/completed nodes
+        /// (RaiseEvent, actions, dialogue choices, Load, ResetProgress) ends in an Evaluate().</summary>
         public void Evaluate()
+        {
+            EvaluateGraph();
+            EventBus.Publish(new StoryStateChangedEvent());
+        }
+
+        private void EvaluateGraph()
         {
             if (_graph == null)
             {

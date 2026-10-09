@@ -1,7 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
+using System.Collections.Generic;
+using tora.eventbus;
 using magus.input;
+using magus.dialogue;
 using magus.battle;
 using magus.master;
 
@@ -18,12 +21,19 @@ namespace magus.chara
         public Unit Unit => _charaController.Unit;
         public PlayerProgression Progression => _progression;
 
-        /// <summary>False while a cutscene (or similar) has taken control - see
-        /// CutsceneManager. Stops movement/targeting/casting input from being processed,
-        /// both the polled kind (Update) and the callback kind (OnAttackInput/OnSpellInput),
-        /// so a Timeline Animation Track can drive the same Animator without the player's
-        /// own control fighting it.</summary>
-        public bool InputEnabled { get; private set; } = true;
+        /// <summary>False while anything holds an input lock - a cutscene (CutsceneManager), a
+        /// dialogue (DialogueStartedEvent/DialogueEndedEvent, see Awake). Stops movement/
+        /// targeting/casting input from being processed, both the polled kind (Update) and the
+        /// callback kind (OnAttackInput/OnSpellInput), so a Timeline Animation Track can drive
+        /// the same Animator without the player's own control fighting it. Locks are per
+        /// owner, so a dialogue ending inside a cutscene doesn't hand control back early.</summary>
+        public bool InputEnabled => _inputLocks.Count == 0;
+
+        private readonly HashSet<object> _inputLocks = new HashSet<object>();
+
+        /// <summary>Lock owner for any playing dialogue - one shared key, since only one
+        /// conversation plays at a time.</summary>
+        private static readonly object DialogueInputLock = new object();
 
         /// <summary>Fires once the death animation/ragdoll has fully played out and
         /// the player object has been deactivated - the correct point to reset and
@@ -45,7 +55,19 @@ namespace magus.chara
         private void Awake()
         {
             _charaController.DeathAnimationFinished += OnDeathAnimationFinished;
+            EventBus.Subscribe<DialogueStartedEvent>(OnDialogueStarted);
+            EventBus.Subscribe<DialogueEndedEvent>(OnDialogueEnded);
         }
+
+        private void OnDestroy()
+        {
+            EventBus.Unsubscribe<DialogueStartedEvent>(OnDialogueStarted);
+            EventBus.Unsubscribe<DialogueEndedEvent>(OnDialogueEnded);
+        }
+
+        private void OnDialogueStarted(DialogueStartedEvent e) => AddInputLock(DialogueInputLock);
+
+        private void OnDialogueEnded(DialogueEndedEvent e) => RemoveInputLock(DialogueInputLock);
 
         public void Initialize()
         {
@@ -66,15 +88,23 @@ namespace magus.chara
 			_charaController.Setup();
 		}
 
-		public void SetInputEnabled(bool enabled)
+		/// <summary>Takes input away until the same owner calls RemoveInputLock. Adding an
+		/// owner that already holds a lock is a no-op.</summary>
+		public void AddInputLock(object owner)
 		{
-			InputEnabled = enabled;
+			var wasEnabled = InputEnabled;
+			_inputLocks.Add(owner);
 
-			if (!enabled)
+			if (wasEnabled)
 			{
 				_isAiming = false;
 				_charaController.SetMoveVector(Vector3.zero);
 			}
+		}
+
+		public void RemoveInputLock(object owner)
+		{
+			_inputLocks.Remove(owner);
 		}
 
 		public void SetSpell(int index, UnitSpellInstance spell)

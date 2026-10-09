@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Playables;
 
 namespace magus.cutscene
 {
@@ -17,13 +18,34 @@ namespace magus.cutscene
     /// doesn't publish CutsceneFinishedEvent) until this dialogue has also ended - see
     /// CutsceneManager.
     ///
-    /// Two reactions to choose from in the Signal Receiver:
+    /// Preferred: DialogueMarker (Timeline right-click > Add Dialogue Marker) - each marker
+    /// carries its own dialogue address, delivered to OnNotify below. Signal Receiver
+    /// reactions are keyed by Signal Asset, so a Signal Emitter needs one Signal Asset per
+    /// different dialogue; markers don't.
+    ///
+    /// Signal path, two reactions to choose from in the Signal Receiver:
     /// - PlayDialogueAndWait: freezes the Timeline at the signal until the dialogue ends,
     ///   then continues. Use this for multi-beat cutscenes (pose -> talk -> animate -> talk)
     ///   - actors hold their pose while the dialogue is up.
     /// - PlayDialogue: the Timeline keeps playing underneath the dialogue.</summary>
-    public class DialogueCutsceneSignal : MonoBehaviour
+    public class DialogueCutsceneSignal : MonoBehaviour, INotificationReceiver
     {
+        public void OnNotify(Playable origin, INotification notification, object context)
+        {
+            if (notification is not DialogueMarker marker)
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(marker.DialogueAddress))
+            {
+                Debug.LogWarning($"[DialogueCutsceneSignal] Dialogue Marker at {marker.time:0.##}s has no DialogueAddress.");
+                return;
+            }
+
+            CutsceneManager.Instance.PlayDialogueDuringCutscene(marker.DialogueAddress, marker.PauseTimeline);
+        }
+
         public void PlayDialogue(string dialogueAddress)
         {
             CutsceneManager.Instance.PlayDialogueDuringCutscene(dialogueAddress);

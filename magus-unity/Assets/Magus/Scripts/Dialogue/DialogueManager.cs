@@ -10,6 +10,7 @@ using tora.eventbus;
 using magus.master;
 using magus.ui;
 using magus.story;
+using magus.input;
 
 namespace magus.dialogue
 {
@@ -32,6 +33,17 @@ namespace magus.dialogue
 
         private UIDialogueView _viewEventsWired;
 
+        /// <summary>True from Play() until the conversation ends/fails - brackets
+        /// DialogueStartedEvent/DialogueEndedEvent, even across the async asset load.</summary>
+        private bool _sessionActive;
+
+        /// <summary>Frame the current entry was shown on - TryAdvance ignores input from that
+        /// same frame, so the Interact press that started a conversation can't also skip its
+        /// first line.</summary>
+        private int _entryShownFrame = -1;
+
+        private InputManager _inputManager;
+
         /// <summary>{Key} tokens in resolved text - see FormatVariables.</summary>
         private static readonly Regex VariableTokenRegex = new Regex(@"\{(\w+)\}");
 
@@ -44,8 +56,23 @@ namespace magus.dialogue
             EventBus.Subscribe<ConversationRequestedEvent>(OnConversationRequested);
         }
 
+        /// <summary>Start, not Awake: InputManager builds its callback table in its own Awake,
+        /// which isn't guaranteed to have run yet.</summary>
+        private void Start()
+        {
+            _inputManager = InputManager.Instance;
+            _inputManager.AddActionCallback(InputManager.PlayerInputType.Interact, InputManager.InputPhase.Performed, OnInteractInput);
+        }
+
         private void OnDestroy()
         {
+            // Cached reference, not InputManager.Instance - at teardown that could re-create
+            // an InputManager with no action asset.
+            if (_inputManager != null)
+            {
+                _inputManager.RemoveActionCallback(InputManager.PlayerInputType.Interact, InputManager.InputPhase.Performed, OnInteractInput);
+            }
+
             EventBus.Unsubscribe<ConversationRequestedEvent>(OnConversationRequested);
             _runner.EntryChanged -= OnEntryChanged;
             _runner.Ended -= OnEnded;
@@ -120,15 +147,36 @@ namespace magus.dialogue
 
         public void Play(string assetAddress)
         {
+            if (!_sessionActive)
+            {
+                _sessionActive = true;
+                EventBus.Publish(new DialogueStartedEvent { DialogueAddress = assetAddress });
+            }
+
             PlayAsync(assetAddress).Forget();
         }
 
         private async UniTask PlayAsync(string assetAddress)
         {
-            var asset = await Addressables.LoadAssetAsync<DialogueAsset>(assetAddress);
+            DialogueAsset asset = null;
+            try
+            {
+                asset = await Addressables.LoadAssetAsync<DialogueAsset>(assetAddress);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[DialogueManager] Exception loading DialogueAsset at '{assetAddress}': {ex.Message}");
+            }
+
             if (asset == null)
             {
                 Debug.LogError($"[DialogueManager] Failed to load DialogueAsset at '{assetAddress}'.");
+
+                // Don't leave the player locked by a conversation that never started.
+                if (!_runner.IsPlaying)
+                {
+                    EndSession();
+                }
                 return;
             }
 
@@ -139,8 +187,34 @@ namespace magus.dialogue
 
         public void Stop()
         {
-            _runner.Stop();
+            // Cleared before _runner.Stop() so OnEnded can tell an interrupted conversation
+            // (no address) from one that played to the end.
             _currentAssetAddress = null;
+            _runner.Stop();
+        }
+
+        /// <summary>Advances a Text entry - bound to the Interact input (see Start), alongside
+        /// the view's advance button. No-op on Choice/TextInput entries (they need a pick/
+        /// submit), while paused, or on the frame the entry appeared.</summary>
+        public bool TryAdvance()
+        {
+            if (!IsPlaying || _runner.CurrentEntry == null || _runner.CurrentEntry.Kind != DialogueEntryKind.Text)
+            {
+                return false;
+            }
+
+            if (Time.frameCount <= _entryShownFrame)
+            {
+                return false;
+            }
+
+            _runner.Advance();
+            return true;
+        }
+
+        private void OnInteractInput(UnityEngine.InputSystem.InputAction.CallbackContext context)
+        {
+            TryAdvance();
         }
 
         public void Pause()
@@ -167,6 +241,7 @@ namespace magus.dialogue
 
         private void OnEntryChanged(DialogueEntry entry)
         {
+            _entryShownFrame = Time.frameCount;
             EntryChanged?.Invoke(entry);
             PresentEntryAsync(entry).Forget();
         }
@@ -278,9 +353,28 @@ namespace magus.dialogue
 
         private void OnEnded()
         {
+            // Reported before Ended fires, so the "seen" flag is already recorded when a
+            // cutscene waiting on this dialogue finishes and its StoryNode completes.
+            if (!string.IsNullOrEmpty(_currentAssetAddress))
+            {
+                EventBus.Publish(new StoryEvent { Id = StoryFlags.ConversationSeen(_currentAssetAddress) });
+            }
+
             _currentAssetAddress = null;
             UIManager.Instance.Close<UIDialogueView>();
+            EndSession();
             Ended?.Invoke();
+        }
+
+        private void EndSession()
+        {
+            if (!_sessionActive)
+            {
+                return;
+            }
+
+            _sessionActive = false;
+            EventBus.Publish(new DialogueEndedEvent());
         }
 
         /// <summary>Round-trips the in-progress conversation's address/entry index through save
